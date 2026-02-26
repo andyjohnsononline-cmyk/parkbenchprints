@@ -7,6 +7,7 @@ import { useState } from "react";
 
 const links = [
   { href: "/", label: "Home" },
+  { href: "/cards", label: "Cards" },
   { href: "/about", label: "About" },
   { href: "/contact", label: "Contact" },
 ];
@@ -38,7 +39,9 @@ export default function Navbar() {
                 {label}
                 <span
                   className={`absolute -bottom-0.5 left-0 h-px bg-foreground transition-all duration-300 ${
-                    pathname === href ? "w-full" : "w-0 group-hover:w-full"
+                    href === "/"
+                      ? pathname === "/" ? "w-full" : "w-0 group-hover:w-full"
+                      : pathname.startsWith(href) ? "w-full" : "w-0 group-hover:w-full"
                   }`}
                 />
               </Link>
@@ -78,7 +81,9 @@ export default function Navbar() {
                 href={href}
                 onClick={() => setMobileOpen(false)}
                 className={`text-sm tracking-wide uppercase ${
-                  pathname === href ? "text-accent" : ""
+                  (href === "/" ? pathname === "/" : pathname.startsWith(href))
+                    ? "text-accent"
+                    : ""
                 }`}
               >
                 {label}
