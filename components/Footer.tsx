@@ -1,5 +1,3 @@
-import Link from "next/link";
-
 export default function Footer() {
   return (
     <footer className="border-t border-secondary px-6 py-12 md:px-12">
@@ -10,15 +8,6 @@ export default function Footer() {
             Print &amp; Paper, Haarlem
           </p>
         </div>
-
-        <nav className="flex gap-8 text-sm tracking-wide uppercase">
-          <Link href="/about" className="transition-colors hover:text-accent">
-            About
-          </Link>
-          <Link href="/contact" className="transition-colors hover:text-accent">
-            Contact
-          </Link>
-        </nav>
 
         <div className="flex gap-6 text-foreground/40">
           <a

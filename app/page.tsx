@@ -1,17 +1,9 @@
-import Hero from "@/components/Hero";
-import Philosophy from "@/components/Philosophy";
-import Services from "@/components/Services";
-import Marquee from "@/components/Marquee";
-import CTA from "@/components/CTA";
-
 export default function Home() {
   return (
-    <>
-      <Hero />
-      <Philosophy />
-      <Services />
-      <Marquee />
-      <CTA />
-    </>
+    <div className="flex min-h-[calc(100vh-5rem)] items-center justify-center px-6">
+      <h1 className="font-serif text-5xl tracking-wide md:text-7xl">
+        Park Bench Prints
+      </h1>
+    </div>
   );
 }
