@@ -17,6 +17,7 @@ const playfair = Playfair_Display({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL("https://parkbenchprints.com"),
   title: "Park Bench Prints — Print & Paper, Haarlem",
   description:
     "A Haarlem-based print and paper studio crafting beautiful letterpress, risograph, and fine art prints with care and precision.",
@@ -27,6 +28,14 @@ export const metadata: Metadata = {
       "A Haarlem-based print and paper studio crafting beautiful letterpress, risograph, and fine art prints.",
     type: "website",
     url: "https://parkbenchprints.com",
+    images: [
+      {
+        url: "/parkbenchprints/og-image.png",
+        width: 1200,
+        height: 630,
+        alt: "Park Bench Prints — Interactive cards from Haarlem",
+      },
+    ],
   },
 };
 

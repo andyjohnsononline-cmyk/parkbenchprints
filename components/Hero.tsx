@@ -2,6 +2,7 @@
 
 import { motion, useScroll, useTransform } from "framer-motion";
 import { useRef } from "react";
+import Link from "next/link";
 
 export default function Hero() {
   const ref = useRef<HTMLDivElement>(null);
@@ -62,12 +63,12 @@ export default function Hero() {
           transition={{ duration: 1, delay: 1.2 }}
           className="mt-12"
         >
-          <a
-            href="#philosophy"
+          <Link
+            href="/cards/kikker-in-je-bil"
             className="inline-block border-b border-foreground/30 pb-1 text-sm tracking-wide uppercase transition-colors hover:border-accent hover:text-accent"
           >
-            Discover our craft
-          </a>
+            Send someone a surprise
+          </Link>
         </motion.div>
       </motion.div>
 
