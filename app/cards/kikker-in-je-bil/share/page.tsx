@@ -1,20 +1,49 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useSyncExternalStore } from "react";
 import { motion } from "framer-motion";
 import Link from "next/link";
 import CardShell from "@/components/cards/CardShell";
 import FrontCover from "@/components/cards/kikker/FrontCover";
 import InsideContent from "@/components/cards/kikker/InsideContent";
+import PersonalMessage from "@/components/cards/PersonalMessage";
+import { decode } from "@/lib/shareCodec";
+import { type Locale, t } from "@/lib/i18n";
 
-export default function KikkerInJeBilPage() {
+function subscribeToHash(callback: () => void) {
+  window.addEventListener("hashchange", callback);
+  return () => window.removeEventListener("hashchange", callback);
+}
+
+function getHash() {
+  return window.location.hash;
+}
+
+function getServerHash() {
+  return "";
+}
+
+export default function SharePage() {
+  const hash = useSyncExternalStore(subscribeToHash, getHash, getServerHash);
+  const shareData = hash ? decode(hash) : null;
   const [isOpen, setIsOpen] = useState(false);
   const [frogOut, setFrogOut] = useState(false);
 
-  const handleOpenChange = useCallback((open: boolean) => {
+  const locale: Locale = shareData?.l ?? "nl";
+
+  const handleOpenChange = (open: boolean) => {
     setIsOpen(open);
     if (!open) setFrogOut(false);
-  }, []);
+  };
+
+  const topContent = shareData ? (
+    <PersonalMessage
+      from={shareData.f}
+      to={shareData.t}
+      message={shareData.m}
+      locale={locale}
+    />
+  ) : undefined;
 
   return (
     <section className="relative min-h-screen overflow-hidden pt-32 pb-20">
@@ -33,15 +62,9 @@ export default function KikkerInJeBilPage() {
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6 }}
       >
-        <Link
-          href="/cards"
-          className="mb-6 inline-block text-sm tracking-wide text-accent uppercase transition-opacity hover:opacity-70"
-        >
-          &larr; All Cards
-        </Link>
         <h1 className="font-serif text-4xl md:text-5xl">1 April</h1>
         <p className="mt-3 text-lg text-foreground/60">
-          Tap the card to open it...
+          {t("share.tapToOpen", locale)}
         </p>
       </motion.div>
 
@@ -52,17 +75,32 @@ export default function KikkerInJeBilPage() {
       >
         <CardShell
           onOpenChange={handleOpenChange}
-          frontCover={<FrontCover />}
+          frontCover={<FrontCover locale={locale} />}
           insideContent={
             <InsideContent
               isOpen={isOpen}
               frogOut={frogOut}
               onFrogOut={() => setFrogOut(true)}
+              topContent={topContent}
+              locale={locale}
             />
           }
         />
       </motion.div>
 
+      {/* Broken link fallback */}
+      {hash && !shareData && (
+        <motion.p
+          className="mx-auto mt-6 max-w-md px-6 text-center text-sm text-foreground/50"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.4, delay: 0.4 }}
+        >
+          {t("share.brokenLink", locale)}
+        </motion.p>
+      )}
+
+      {/* Reveal text */}
       <motion.p
         className="mt-10 text-center font-serif text-2xl text-accent md:text-3xl"
         initial={{ opacity: 0 }}
@@ -72,17 +110,23 @@ export default function KikkerInJeBilPage() {
         Kikker in je bil!
       </motion.p>
 
+      {/* Attribution and send-your-own */}
       <motion.div
         className="mt-6 text-center"
         initial={{ opacity: 0 }}
         animate={{ opacity: frogOut ? 1 : 0, y: frogOut ? 0 : 10 }}
         transition={{ duration: 0.4, delay: frogOut ? 0.6 : 0 }}
       >
+        {shareData && (
+          <p className="text-foreground/50">
+            {t("share.sentBy", locale)} {shareData.f}
+          </p>
+        )}
         <Link
           href="/cards/kikker-in-je-bil/send"
-          className="inline-block border-b border-foreground/30 pb-1 text-sm tracking-wide uppercase transition-colors hover:border-accent hover:text-accent"
+          className="mt-4 inline-block border-b border-foreground/30 pb-1 text-sm tracking-wide uppercase transition-colors hover:border-accent hover:text-accent"
         >
-          Send this card to someone &rarr;
+          {t("share.sendOwn", locale)}
         </Link>
       </motion.div>
     </section>
