@@ -6,6 +6,10 @@
 - **Space/industry:** Independent print & paper studio, stationery, greeting cards
 - **Project type:** Interactive marketing site with card experiences (static export, no backend)
 
+## Design Principles
+- **The payoff is merging the tech into physical reality.** Every digital interaction should make the physical card more desirable. The screen is not the destination — the printed card in someone's hands is. Technology serves the tangible.
+- **Ease of a child's game.** Draggable elements (frog, flowers, future interactions) must feel instantly intuitive — no instructions needed, no frustration possible. Low thresholds, forgiving constraints, generous hit targets. If a five-year-old wouldn't figure it out in two seconds, simplify it.
+
 ## Aesthetic Direction
 - **Direction:** Luxury/Refined with Playful undertones
 - **Decoration level:** Intentional — subtle dot-grid textures, paper gradients, hand-drawn SVG illustrations
@@ -117,5 +121,6 @@
 | 2026-03-21 | Restrained color with single accent | Print studios avoid loud palettes — the prints/cards should be the color, not the chrome |
 | 2026-03-21 | Expressive motion as innovation token | Nobody else in print/stationery does spring-physics card interactions — this is the differentiator |
 | 2026-03-21 | Sharp-cornered buttons | Intentional contrast with soft card surfaces — buttons are functional, cards are precious |
+| 2026-03-22 | Added Design Principles section | Two core principles codified: "tech merging into physical reality" as product motto, and "ease of a child's game" as interaction standard for all draggable elements |
 | 2026-03-21 | Added semantic colors | Success (#5A8A5E), Warning (#C4933F), Error (#B5544E), Info (#5A7A9B) — earthy tones that harmonize with the warm palette |
 | 2026-03-21 | Dark mode defined but not implemented | Strategy documented for when it's needed — invert surfaces, warm up accent, reduce semantic saturation |
