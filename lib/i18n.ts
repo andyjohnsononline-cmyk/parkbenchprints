@@ -48,6 +48,14 @@ const strings: Record<string, Record<Locale, string>> = {
     nl: "Prachtig boeket!",
     en: "Beautiful bouquet!",
   },
+  "bloemen.makeBouquet": {
+    nl: "Maak boeket",
+    en: "Make bouquet",
+  },
+  "bloemen.paperHint": {
+    nl: "Leg bloemen hier neer",
+    en: "Place flowers here",
+  },
 
   // Broken link fallback
   "share.brokenLink": {

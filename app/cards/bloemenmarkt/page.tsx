@@ -3,8 +3,8 @@
 import { useState, useCallback } from "react";
 import { motion } from "framer-motion";
 import Link from "next/link";
-import CardShell from "@/components/cards/CardShell";
-import FrontCover from "@/components/cards/bloemenmarkt/FrontCover";
+import GatefoldShell from "@/components/cards/GatefoldShell";
+import { FrontLeft, FrontRight } from "@/components/cards/bloemenmarkt/FrontCover";
 import InsideContent from "@/components/cards/bloemenmarkt/InsideContent";
 
 export default function BloemenmarktPage() {
@@ -48,9 +48,10 @@ export default function BloemenmarktPage() {
         animate={{ opacity: 1, scale: 1 }}
         transition={{ duration: 0.5, delay: 0.2 }}
       >
-        <CardShell
+        <GatefoldShell
           onOpenChange={handleOpenChange}
-          frontCover={<FrontCover />}
+          frontLeft={<FrontLeft />}
+          frontRight={<FrontRight />}
           insideContent={<InsideContent isOpen={isOpen} />}
         />
       </motion.div>

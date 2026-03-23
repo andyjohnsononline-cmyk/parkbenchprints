@@ -9,20 +9,18 @@ import type { Locale } from "@/lib/i18n";
 interface FlowerBucketProps {
   flower: FlowerInfo;
   index: number;
-  isPicked: boolean;
   isOpen: boolean;
-  onPick: (flowerId: string) => void;
-  bouquetRef: React.RefObject<HTMLDivElement | null>;
+  onPick: (flowerId: string, x: number, y: number) => void;
+  paperRef: React.RefObject<HTMLDivElement | null>;
   locale?: Locale;
 }
 
 export default function FlowerBucket({
   flower,
   index,
-  isPicked,
   isOpen,
   onPick,
-  bouquetRef,
+  paperRef,
   locale = "nl",
 }: FlowerBucketProps) {
   const prefersReduced = useReducedMotion();
@@ -30,32 +28,34 @@ export default function FlowerBucket({
 
   const handleDragEnd = useCallback(
     (_: unknown, info: { point: { x: number; y: number } }) => {
-      if (!bouquetRef.current) return;
-      const bouquetRect = bouquetRef.current.getBoundingClientRect();
+      if (!paperRef.current) return;
+      const paperRect = paperRef.current.getBoundingClientRect();
       const { x, y } = info.point;
 
       if (
-        x >= bouquetRect.left &&
-        x <= bouquetRect.right &&
-        y >= bouquetRect.top &&
-        y <= bouquetRect.bottom
+        x >= paperRect.left &&
+        x <= paperRect.right &&
+        y >= paperRect.top &&
+        y <= paperRect.bottom
       ) {
-        onPick(flower.id);
+        const pctX = ((x - paperRect.left) / paperRect.width) * 100;
+        const pctY = ((y - paperRect.top) / paperRect.height) * 100;
+        onPick(flower.id, pctX, pctY);
       }
     },
-    [bouquetRef, onPick, flower.id],
+    [paperRef, onPick, flower.id],
   );
 
   const handleKeyDown = useCallback(
     (e: React.KeyboardEvent) => {
-      if (isPicked || !isOpen) return;
+      if (!isOpen) return;
       if (e.key === "Enter" || e.key === " ") {
         e.preventDefault();
         e.stopPropagation();
-        onPick(flower.id);
+        onPick(flower.id, 50, 50);
       }
     },
-    [isPicked, isOpen, onPick, flower.id],
+    [isOpen, onPick, flower.id],
   );
 
   const ariaLabel =
@@ -66,57 +66,51 @@ export default function FlowerBucket({
   return (
     <div
       className="relative flex flex-col items-center"
-      style={{
-        opacity: isPicked ? 0.4 : 1,
-        transition: "opacity 0.3s ease",
-        width: 52,
-      }}
+      style={{ width: 52 }}
     >
       {/* Draggable flower */}
-      {!isPicked && (
+      <motion.div
+        role="button"
+        tabIndex={isOpen ? 0 : -1}
+        aria-label={ariaLabel}
+        className="cursor-grab rounded active:cursor-grabbing focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-2"
+        drag={isOpen ? true : false}
+        dragSnapToOrigin
+        dragElastic={0.15}
+        onDragEnd={handleDragEnd}
+        whileDrag={prefersReduced ? {} : { scale: 1.05, zIndex: 50 }}
+        onKeyDown={handleKeyDown}
+        onClick={(e: React.MouseEvent) => {
+          e.stopPropagation();
+          if (isOpen) onPick(flower.id, 50, 50);
+        }}
+        onPointerDown={(e: React.PointerEvent) => e.stopPropagation()}
+        style={{ touchAction: "none" }}
+      >
+        {/* Idle sway animation */}
         <motion.div
-          role="button"
-          tabIndex={isOpen ? 0 : -1}
-          aria-label={ariaLabel}
-          className="cursor-grab active:cursor-grabbing focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-2 rounded"
-          drag={isOpen ? true : false}
-          dragSnapToOrigin
-          dragElastic={0.15}
-          onDragEnd={handleDragEnd}
-          whileDrag={prefersReduced ? {} : { scale: 1.05, zIndex: 50 }}
-          onKeyDown={handleKeyDown}
-          onClick={(e: React.MouseEvent) => {
-            e.stopPropagation();
-            if (isOpen && !isPicked) onPick(flower.id);
-          }}
-          onPointerDown={(e: React.PointerEvent) => e.stopPropagation()}
-          style={{ touchAction: "none" }}
+          animate={
+            isOpen && !prefersReduced
+              ? { rotate: [0, -2, 2, -1, 0] }
+              : {}
+          }
+          transition={
+            isOpen
+              ? {
+                  duration: 2.5,
+                  repeat: Infinity,
+                  ease: "easeInOut",
+                  delay: (index * 0.3) % 2,
+                }
+              : {}
+          }
         >
-          {/* Idle sway animation */}
-          <motion.div
-            animate={
-              isOpen && !isPicked && !prefersReduced
-                ? { rotate: [0, -2, 2, -1, 0] }
-                : {}
-            }
-            transition={
-              isOpen && !isPicked
-                ? {
-                    duration: 2.5,
-                    repeat: Infinity,
-                    ease: "easeInOut",
-                    delay: (index * 0.3) % 2,
-                  }
-                : {}
-            }
-          >
-            <FlowerComponent className="w-10 h-auto drop-shadow-sm" />
-          </motion.div>
+          <FlowerComponent className="h-auto w-10 drop-shadow-sm" />
         </motion.div>
-      )}
+      </motion.div>
 
       {/* Bucket underneath */}
-      <BucketSVG className="w-12 h-auto -mt-2" />
+      <BucketSVG className="-mt-2 h-auto w-12" />
     </div>
   );
 }
