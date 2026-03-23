@@ -85,7 +85,10 @@ export default function FlowerBucket({
           onDragEnd={handleDragEnd}
           whileDrag={prefersReduced ? {} : { scale: 1.05, zIndex: 50 }}
           onKeyDown={handleKeyDown}
-          onClick={(e: React.MouseEvent) => e.stopPropagation()}
+          onClick={(e: React.MouseEvent) => {
+            e.stopPropagation();
+            if (isOpen && !isPicked) onPick(flower.id);
+          }}
           onPointerDown={(e: React.PointerEvent) => e.stopPropagation()}
           style={{ touchAction: "none" }}
         >

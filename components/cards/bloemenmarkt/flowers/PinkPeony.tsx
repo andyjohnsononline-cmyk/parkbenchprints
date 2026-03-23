@@ -4,7 +4,7 @@ interface PinkPeonyProps {
 
 export default function PinkPeony({ className = "" }: PinkPeonyProps) {
   return (
-    <svg viewBox="0 0 1026.05 914.64" xmlns="http://www.w3.org/2000/svg" className={className} aria-label="Pink peony illustration">
+    <svg viewBox="323 38 376 830" xmlns="http://www.w3.org/2000/svg" className={className} aria-label="Pink peony illustration">
       <g>
       <path fill="#b18c6d" d="M689.38,856.78c-80.86-224.01-145.62-451.12-193.03-676.93-8.39,4.64-7.32,20.24-5.29,33.5,32.76,214.02,112.28,430.95,190.91,644.49"/>
       <g>
