@@ -1,13 +1,13 @@
 # Park Bench Prints
 
-An interactive website for Park Bench Prints, a Haarlem-based print and paper studio.
+Interactive digital card experiences for Park Bench Prints, a Haarlem-based print and paper studio. Each card is a playful, animated interaction that makes you want to hold the physical version.
 
 ## Tech Stack
 
-- **Next.js 15** (App Router)
-- **TypeScript**
+- **Next.js 16** (App Router, static export)
+- **TypeScript** + **React 19**
 - **Tailwind CSS 4**
-- **Framer Motion** for scroll-driven animations and page transitions
+- **Framer Motion** for spring-physics card animations and drag interactions
 
 ## Getting Started
 
@@ -16,40 +16,31 @@ npm install
 npm run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) in your browser.
+Open [http://localhost:3000/parkbenchprints](http://localhost:3000/parkbenchprints) in your browser.
+
+## Cards
+
+| Route | Card | Interaction |
+|-------|------|-------------|
+| `/cards/bloemenmarkt` | Bloemenmarkt (Flower Market) | Gatefold card — drag flowers from buckets onto wrapping paper, make a bouquet |
+| `/cards/kikker-in-je-bil` | Kikker in je Bil (Frog in Your Pants) | Single-fold card — drag the frog to reveal the April Fools joke |
 
 ## Pages
 
-| Route      | Description                                          |
-| ---------- | ---------------------------------------------------- |
-| `/`        | Immersive landing page with animated scroll sections  |
-| `/about`   | Company story, values, and studio information         |
-| `/contact` | Contact form with studio address and hours            |
+| Route | Description |
+|-------|-------------|
+| `/` | Landing page |
+| `/cards` | Card catalog |
+| `/cards/kikker-in-je-bil/send` | Personalize and share the kikker card |
 
-## Project Structure
+## Design
 
-```
-app/
-  layout.tsx          Root layout with fonts, nav, footer
-  page.tsx            Landing page
-  globals.css         Tailwind imports and custom styles
-  about/page.tsx      About page
-  contact/page.tsx    Contact page
-components/
-  Navbar.tsx          Fixed navigation with mobile menu
-  Footer.tsx          Site footer
-  Hero.tsx            Full-viewport animated hero
-  Philosophy.tsx      Scroll-reveal text section
-  Services.tsx        Service cards with staggered animation
-  Marquee.tsx         Auto-scrolling keyword band
-  CTA.tsx             Call-to-action section
-  ContactForm.tsx     Validated contact form
-  PageTransition.tsx  Framer Motion page wrapper
-```
+See [DESIGN.md](DESIGN.md) for the full design system — typography, color palette, spacing, motion springs, and interaction patterns.
 
 ## Build
 
 ```bash
 npm run build
-npm start
 ```
+
+Static export to `out/` — deployed to GitHub Pages at `/parkbenchprints` and Vercel preview at root.
