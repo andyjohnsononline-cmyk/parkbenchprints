@@ -1,6 +1,6 @@
 "use client";
 
-import { motion } from "framer-motion";
+import { motion, useReducedMotion } from "framer-motion";
 import { type Locale, t } from "@/lib/i18n";
 
 interface FrontCoverProps {
@@ -40,6 +40,8 @@ export function FrontLeft({ locale = "nl" }: FrontCoverProps) {
  * Right half of the gatefold cover.
  */
 export function FrontRight({ locale = "nl" }: FrontCoverProps) {
+  const prefersReduced = useReducedMotion();
+
   return (
     <div className="relative flex h-full flex-col bg-gradient-to-bl from-[#FFF8F0] to-[#F5EDE3]">
       <div
@@ -62,8 +64,8 @@ export function FrontRight({ locale = "nl" }: FrontCoverProps) {
       <div className="px-4 pb-4">
         <motion.p
           className="text-center text-[10px] tracking-wider text-foreground/30 uppercase"
-          animate={{ opacity: [0.3, 0.7, 0.3] }}
-          transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
+          animate={prefersReduced ? { opacity: 0.5 } : { opacity: [0.3, 0.7, 0.3] }}
+          transition={prefersReduced ? {} : { duration: 2, repeat: Infinity, ease: "easeInOut" }}
         >
           {t("share.tapToOpen", locale)}
         </motion.p>

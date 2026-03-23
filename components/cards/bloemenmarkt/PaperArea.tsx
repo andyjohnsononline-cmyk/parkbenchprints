@@ -156,7 +156,14 @@ const PaperArea = forwardRef<HTMLDivElement, PaperAreaProps>(
             }
           >
             <p className="text-[10px] tracking-wider text-foreground/40 uppercase">
-              {placedFlowers.length} {locale === "nl" ? "bloemen" : "flowers"}
+              {placedFlowers.length}{" "}
+              {placedFlowers.length === 1
+                ? locale === "nl"
+                  ? "bloem"
+                  : "flower"
+                : locale === "nl"
+                  ? "bloemen"
+                  : "flowers"}
             </p>
 
             {!bouquetMade && (

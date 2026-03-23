@@ -57,13 +57,17 @@ export default function InsideContent({
           className="relative z-10 pt-2 text-center text-[10px] tracking-wider text-white/70 uppercase drop-shadow-sm"
           animate={{
             opacity:
-              isOpen && placedFlowers.length === 0 ? [0.3, 0.8, 0.3] : 0,
+              isOpen && placedFlowers.length === 0
+                ? prefersReduced
+                  ? 0.5
+                  : [0.3, 0.8, 0.3]
+                : 0,
           }}
-          transition={{
-            duration: 2,
-            repeat: Infinity,
-            ease: "easeInOut",
-          }}
+          transition={
+            prefersReduced
+              ? {}
+              : { duration: 2, repeat: Infinity, ease: "easeInOut" }
+          }
         >
           {t("bloemen.dragHint", locale)}
         </motion.p>
