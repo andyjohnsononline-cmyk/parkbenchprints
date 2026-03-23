@@ -38,6 +38,25 @@ const strings: Record<string, Record<Locale, string>> = {
   // Card interaction
   "card.dragHint": { nl: "↑ Trek eruit!", en: "↑ Pull it out!" },
 
+  // Bloemenmarkt
+  "bloemen.dragHint": {
+    nl: "Sleep bloemen naar je boeket",
+    en: "Drag flowers to your bouquet",
+  },
+  "bloemen.reset": { nl: "Opnieuw", en: "Reset" },
+  "bloemen.complete": {
+    nl: "Prachtig boeket!",
+    en: "Beautiful bouquet!",
+  },
+  "bloemen.makeBouquet": {
+    nl: "Maak boeket",
+    en: "Make bouquet",
+  },
+  "bloemen.paperHint": {
+    nl: "Leg bloemen hier neer",
+    en: "Place flowers here",
+  },
+
   // Broken link fallback
   "share.brokenLink": {
     nl: "Deze kaart is speciaal voor jou verstuurd — maar de link lijkt incompleet. Vraag de afzender om opnieuw te sturen!",
