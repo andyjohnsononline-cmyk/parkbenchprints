@@ -17,4 +17,11 @@ export const cards: CardInfo[] = [
     date: "1 April",
     available: true,
   },
+  {
+    slug: "bloemenmarkt",
+    title: "Bloemenmarkt",
+    subtitle: "Flower Market",
+    description: "Browse the buckets and build your own bouquet...",
+    available: true,
+  },
 ];
