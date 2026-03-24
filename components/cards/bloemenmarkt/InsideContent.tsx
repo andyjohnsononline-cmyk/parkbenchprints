@@ -17,6 +17,9 @@ interface HeldFlower {
   y: number;
 }
 
+// Minimum pixels the pointer must move to count as a drag (vs a click)
+const DRAG_THRESHOLD = 8;
+
 export default function InsideContent({
   isOpen,
   locale = "en",
@@ -26,6 +29,10 @@ export default function InsideContent({
   const [bouquetMade, setBouquetMade] = useState(false);
   const [heldFlower, setHeldFlower] = useState<HeldFlower | null>(null);
   const heldFlowerRef = useRef<HeldFlower | null>(null);
+  // "holding" = pointer is down and dragging; "floating" = clicked once, follows cursor freely
+  const modeRef = useRef<"idle" | "holding" | "floating">("idle");
+  const startPosRef = useRef<{ x: number; y: number }>({ x: 0, y: 0 });
+  const hasMovedRef = useRef(false);
   const [rawSvg, setRawSvg] = useState<string>("");
   const svgContainerRef = useRef<HTMLDivElement>(null);
   const paperRef = useRef<HTMLDivElement>(null);
@@ -80,12 +87,47 @@ export default function InsideContent({
     setPlacedFlowers((prev) => prev.filter((f) => f.instanceId !== instanceId));
   }, []);
 
-  // --- "Pull from bucket" interaction ---
-  // pointerdown on bucket → flower appears at pointer → follows pointer → pointerup places it
+  // Try to place flower at the given screen coordinates. Returns true if placed.
+  const tryPlace = useCallback(
+    (x: number, y: number): boolean => {
+      const current = heldFlowerRef.current;
+      if (!current || !paperRef.current) return false;
+      const paperRect = paperRef.current.getBoundingClientRect();
+      if (
+        x >= paperRect.left &&
+        x <= paperRect.right &&
+        y >= paperRect.top &&
+        y <= paperRect.bottom
+      ) {
+        const pctX = ((x - paperRect.left) / paperRect.width) * 100;
+        const pctY = ((y - paperRect.top) / paperRect.height) * 100;
+        handlePick(current.id, pctX, pctY);
+        return true;
+      }
+      return false;
+    },
+    [handlePick]
+  );
+
+  const dismiss = useCallback(() => {
+    heldFlowerRef.current = null;
+    modeRef.current = "idle";
+    setHeldFlower(null);
+  }, []);
+
+  // --- Pointer interaction: supports both click-to-pick and drag-to-place ---
 
   const handleSvgPointerDown = useCallback(
     (e: React.PointerEvent) => {
       if (!isOpen) return;
+
+      // If already floating a flower, try to place it or dismiss
+      if (modeRef.current === "floating" && heldFlowerRef.current) {
+        tryPlace(e.clientX, e.clientY);
+        dismiss();
+        return;
+      }
+
       const target = e.target as Element;
       for (const bucketId of BUCKET_IDS) {
         const bucketEl = target.closest(`#${bucketId}`);
@@ -98,50 +140,52 @@ export default function InsideContent({
             y: e.clientY,
           };
           heldFlowerRef.current = held;
+          modeRef.current = "holding";
+          startPosRef.current = { x: e.clientX, y: e.clientY };
+          hasMovedRef.current = false;
           setHeldFlower(held);
           return;
         }
       }
+
+      // Clicked on non-bucket area while no flower is held — do nothing
     },
-    [isOpen]
+    [isOpen, tryPlace, dismiss]
   );
 
-  // Track pointer movement while holding a flower
+  // Global pointer tracking
   useEffect(() => {
-    if (!heldFlowerRef.current) return;
-
     const handleMove = (e: PointerEvent) => {
       if (!heldFlowerRef.current) return;
+      if (modeRef.current === "idle") return;
+
+      // Check if we've moved past the drag threshold
+      if (!hasMovedRef.current) {
+        const dx = e.clientX - startPosRef.current.x;
+        const dy = e.clientY - startPosRef.current.y;
+        if (Math.sqrt(dx * dx + dy * dy) > DRAG_THRESHOLD) {
+          hasMovedRef.current = true;
+        }
+      }
+
       const updated = { ...heldFlowerRef.current, x: e.clientX, y: e.clientY };
       heldFlowerRef.current = updated;
       setHeldFlower(updated);
     };
 
     const handleUp = (e: PointerEvent) => {
-      const current = heldFlowerRef.current;
-      if (!current || !paperRef.current) {
-        heldFlowerRef.current = null;
-        setHeldFlower(null);
-        return;
+      if (!heldFlowerRef.current) return;
+      if (modeRef.current !== "holding") return;
+
+      if (hasMovedRef.current) {
+        // User dragged: place if on paper, otherwise dismiss
+        tryPlace(e.clientX, e.clientY);
+        dismiss();
+      } else {
+        // User clicked (no significant movement): switch to floating mode
+        // Flower stays visible and follows cursor until next click
+        modeRef.current = "floating";
       }
-
-      const paperRect = paperRef.current.getBoundingClientRect();
-      const { clientX: x, clientY: y } = e;
-
-      if (
-        x >= paperRect.left &&
-        x <= paperRect.right &&
-        y >= paperRect.top &&
-        y <= paperRect.bottom
-      ) {
-        const pctX = ((x - paperRect.left) / paperRect.width) * 100;
-        const pctY = ((y - paperRect.top) / paperRect.height) * 100;
-        handlePick(current.id, pctX, pctY);
-      }
-      // else: dropped outside paper — flower disappears (back to bucket)
-
-      heldFlowerRef.current = null;
-      setHeldFlower(null);
     };
 
     window.addEventListener("pointermove", handleMove);
@@ -150,7 +194,16 @@ export default function InsideContent({
       window.removeEventListener("pointermove", handleMove);
       window.removeEventListener("pointerup", handleUp);
     };
-  }, [heldFlower, handlePick]);
+  }, [tryPlace, dismiss]);
+
+  // Auto-dismiss after timeout (safety net)
+  useEffect(() => {
+    if (!heldFlower) return;
+    const timer = setTimeout(() => {
+      dismiss();
+    }, 15000);
+    return () => clearTimeout(timer);
+  }, [heldFlower, dismiss]);
 
   // Keyboard support on bucket groups (direct place for a11y)
   const handleSvgKeyDown = useCallback(
@@ -223,7 +276,7 @@ export default function InsideContent({
         </div>
       </div>
 
-      {/* Held flower — follows pointer while button is pressed */}
+      {/* Held flower — follows pointer */}
       <AnimatePresence>
         {heldFlower && heldFlowerInfo && (
           <motion.div
