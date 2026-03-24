@@ -266,7 +266,7 @@ export default function InsideContent({
             onPointerDown={(e: React.PointerEvent) => e.stopPropagation()}
             onClick={handleLiftedClick}
           >
-            <liftedFlowerInfo.Component className="h-auto w-12 drop-shadow-md" />
+            <liftedFlowerInfo.Component className="h-20 w-auto drop-shadow-md" />
           </motion.div>
         )}
       </AnimatePresence>
