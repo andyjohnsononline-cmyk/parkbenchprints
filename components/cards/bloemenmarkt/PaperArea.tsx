@@ -29,7 +29,6 @@ export default function PaperArea({
 }: PaperAreaProps) {
   const prefersReduced = useReducedMotion();
   const isEmpty = placedFlowers.length === 0;
-  const basePath = process.env.NEXT_PUBLIC_BASE_PATH || "";
 
   return (
     <div
@@ -37,20 +36,11 @@ export default function PaperArea({
       aria-label={locale === "nl" ? "Jouw boeket" : "Your bouquet"}
       className="pointer-events-none relative h-full w-full"
     >
-      {/* Market paper shape from designer SVG */}
+      {/* Transparent overlay — the paper visual is part of the SVG scene (cls-53) */}
       <div className="relative flex h-full w-full items-center justify-center">
-        {/* The actual paper SVG as background */}
-        <img
-          src={`${basePath}/market-paper.svg`}
-          alt=""
-          aria-hidden="true"
-          className="absolute inset-0 h-full w-full object-contain drop-shadow-sm"
-          draggable={false}
-        />
-
         {/* Empty state hint */}
         {isEmpty && !bouquetMade && (
-          <p className="relative z-10 font-serif text-sm tracking-wide text-white/60 italic">
+          <p className="relative z-10 font-serif text-sm tracking-wide text-foreground/30 italic">
             {t("bloemen.paperHint", locale)}
           </p>
         )}
@@ -128,7 +118,7 @@ export default function PaperArea({
               prefersReduced ? { duration: 0.01 } : { duration: 0.3 }
             }
           >
-            <p className="text-xs tracking-wider text-white/70 uppercase">
+            <p className="text-xs tracking-wider text-foreground/50 uppercase">
               {placedFlowers.length}{" "}
               {placedFlowers.length === 1 ? "flower" : "flowers"}
             </p>
@@ -136,7 +126,7 @@ export default function PaperArea({
             {!bouquetMade && (
               <button
                 type="button"
-                className="rounded bg-white/20 px-3 py-1 text-xs tracking-[0.1em] text-white uppercase transition-colors hover:bg-white/30 focus-visible:outline-2 focus-visible:outline-white"
+                className="rounded bg-accent/10 px-3 py-1 text-xs tracking-[0.1em] text-accent uppercase transition-colors hover:bg-accent/20 focus-visible:outline-2 focus-visible:outline-accent"
                 onClick={(e) => {
                   e.stopPropagation();
                   onMakeBouquet();
@@ -149,7 +139,7 @@ export default function PaperArea({
 
             <button
               type="button"
-              className="text-xs tracking-[0.1em] text-white/50 uppercase transition-colors hover:text-white focus-visible:outline-2 focus-visible:outline-white"
+              className="text-xs tracking-[0.1em] text-accent/60 uppercase transition-colors hover:text-accent focus-visible:outline-2 focus-visible:outline-accent"
               onClick={(e) => {
                 e.stopPropagation();
                 onReset();
@@ -164,7 +154,7 @@ export default function PaperArea({
         {/* Completion message */}
         {bouquetMade && (
           <motion.p
-            className="absolute right-0 bottom-8 left-0 z-20 text-center font-serif text-base text-white"
+            className="absolute right-0 bottom-8 left-0 z-20 text-center font-serif text-base text-accent"
             initial={prefersReduced ? false : { opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={

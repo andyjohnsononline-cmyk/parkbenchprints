@@ -17,13 +17,6 @@ interface LiftedFlower {
   originY: number;
 }
 
-interface PaperRect {
-  top: number;
-  left: number;
-  width: number;
-  height: number;
-}
-
 export default function InsideContent({
   isOpen,
   locale = "en",
@@ -34,7 +27,6 @@ export default function InsideContent({
   const [liftedFlower, setLiftedFlower] = useState<LiftedFlower | null>(null);
   const liftedFlowerRef = useRef<LiftedFlower | null>(null);
   const [rawSvg, setRawSvg] = useState<string>("");
-  const [paperStyle, setPaperStyle] = useState<PaperRect | null>(null);
   const svgContainerRef = useRef<HTMLDivElement>(null);
   const paperRef = useRef<HTMLDivElement>(null);
 
@@ -45,14 +37,9 @@ export default function InsideContent({
       .then((res) => res.text())
       .then((text) => {
         // Inject preserveAspectRatio directly into SVG markup
-        let patched = text.replace(
+        const patched = text.replace(
           "<svg ",
           '<svg preserveAspectRatio="xMidYMid slice" '
-        );
-        // Hide the large white rect (cls-26) — we overlay market-paper.svg instead
-        patched = patched.replace(
-          /(<rect class="cls-26"[^/]*)\/?>/,
-          '$1 opacity="0"/>'
         );
         setRawSvg(patched);
       })
@@ -74,49 +61,6 @@ export default function InsideContent({
         );
       }, rawSvg)
     : "";
-
-  // Compute bouquet overlay position from SVG rect
-  useEffect(() => {
-    if (!svgContent || !svgContainerRef.current) return;
-    const container = svgContainerRef.current;
-    const svg = container.querySelector("svg");
-    if (!svg) return;
-
-    const computePaperPosition = () => {
-      const paperRectEl = svg.querySelector("rect");
-      if (!paperRectEl) return;
-
-      const containerBox = container.getBoundingClientRect();
-      const rectBox = paperRectEl.getBoundingClientRect();
-
-      // Guard: skip if dimensions are 0 (SVG not rendered yet)
-      if (rectBox.width <= 0 || rectBox.height <= 0) return;
-      if (containerBox.width <= 0 || containerBox.height <= 0) return;
-
-      setPaperStyle({
-        top: rectBox.top - containerBox.top,
-        left: rectBox.left - containerBox.left,
-        width: rectBox.width,
-        height: rectBox.height,
-      });
-    };
-
-    // Initial computation + delayed recompute for transitions
-    computePaperPosition();
-    const delayed = setTimeout(computePaperPosition, 100);
-
-    const observer = new ResizeObserver(() => {
-      computePaperPosition();
-      // Recompute after CSS transitions settle
-      setTimeout(computePaperPosition, 700);
-    });
-    observer.observe(container);
-
-    return () => {
-      clearTimeout(delayed);
-      observer.disconnect();
-    };
-  }, [svgContent, isOpen]);
 
   const handlePick = useCallback((flowerId: string, x: number, y: number) => {
     setPlacedFlowers((prev) => {
@@ -241,9 +185,8 @@ export default function InsideContent({
 
   return (
     <div className="relative flex h-full flex-col bg-[#FFF8F0]">
-      {/* Full SVG scene — market + bouquet area */}
+      {/* Full SVG scene — includes market stall and paper area */}
       <div className="relative flex-1" style={{ minHeight: 0 }}>
-        {/* Inline SVG via fetch + dangerouslySetInnerHTML */}
         <div
           ref={svgContainerRef}
           className="market-svg-container absolute inset-0 overflow-hidden"
@@ -273,28 +216,21 @@ export default function InsideContent({
           {t("bloemen.dragHint", locale)}
         </motion.p>
 
-        {/* Fix 2 + Fix 3: Bouquet overlay — dynamically positioned from SVG rect,
+        {/* Bouquet overlay — covers the paper area in the lower portion of the SVG,
             pointer-events: none so bucket clicks pass through */}
-        {paperStyle && (
-          <div
-            ref={paperRef}
-            className="pointer-events-none absolute z-10"
-            style={{
-              top: paperStyle.top,
-              left: paperStyle.left,
-              width: paperStyle.width,
-              height: paperStyle.height,
-            }}
-          >
-            <PaperArea
-              placedFlowers={placedFlowers}
-              bouquetMade={bouquetMade}
-              onMakeBouquet={handleMakeBouquet}
-              onReset={handleReset}
-              locale={locale}
-            />
-          </div>
-        )}
+        <div
+          ref={paperRef}
+          className="pointer-events-none absolute right-0 bottom-0 left-0 z-10"
+          style={{ height: "55%" }}
+        >
+          <PaperArea
+            placedFlowers={placedFlowers}
+            bouquetMade={bouquetMade}
+            onMakeBouquet={handleMakeBouquet}
+            onReset={handleReset}
+            locale={locale}
+          />
+        </div>
       </div>
 
       {/* Lifted flower — floating draggable element */}
