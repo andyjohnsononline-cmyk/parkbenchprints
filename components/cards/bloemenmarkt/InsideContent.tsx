@@ -78,6 +78,10 @@ export default function InsideContent({
     setBouquetMade(false);
   }, []);
 
+  const handleRemoveFlower = useCallback((instanceId: string) => {
+    setPlacedFlowers((prev) => prev.filter((f) => f.instanceId !== instanceId));
+  }, []);
+
   // Click on SVG bucket → place flower directly into bouquet
   // (Simpler and more reliable than lift-then-drag for click interactions)
   const handleSvgClick = useCallback(
@@ -153,20 +157,15 @@ export default function InsideContent({
     [handlePick]
   );
 
-  // Auto-dismiss lifted flower after timeout — prevents blocking
+  // Auto-dismiss lifted flower after timeout — just dismiss, don't place
   useEffect(() => {
     if (!liftedFlower) return;
     const timer = setTimeout(() => {
-      // Auto-place at random position in paper if still lifted
-      const current = liftedFlowerRef.current;
-      if (current) {
-        handlePick(current.id, 20 + Math.random() * 60, 20 + Math.random() * 60);
-      }
       liftedFlowerRef.current = null;
       setLiftedFlower(null);
-    }, 4000);
+    }, 6000);
     return () => clearTimeout(timer);
-  }, [liftedFlower, handlePick]);
+  }, [liftedFlower]);
 
   // Click on lifted flower → auto-place in paper
   const handleLiftedClick = useCallback(() => {
@@ -228,6 +227,7 @@ export default function InsideContent({
             bouquetMade={bouquetMade}
             onMakeBouquet={handleMakeBouquet}
             onReset={handleReset}
+            onRemoveFlower={handleRemoveFlower}
             locale={locale}
           />
         </div>
@@ -254,8 +254,7 @@ export default function InsideContent({
                 : { type: "spring", stiffness: 300, damping: 20 }
             }
             drag
-            dragSnapToOrigin
-            dragElastic={0.15}
+            dragMomentum={false}
             onDragEnd={handleDragEnd}
             whileDrag={prefersReduced ? {} : { scale: 1.05, zIndex: 60 }}
             onPointerDown={(e: React.PointerEvent) => e.stopPropagation()}

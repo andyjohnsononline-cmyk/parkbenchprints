@@ -17,6 +17,7 @@ interface PaperAreaProps {
   bouquetMade: boolean;
   onMakeBouquet: () => void;
   onReset: () => void;
+  onRemoveFlower?: (instanceId: string) => void;
   locale?: Locale;
 }
 
@@ -25,6 +26,7 @@ export default function PaperArea({
   bouquetMade,
   onMakeBouquet,
   onReset,
+  onRemoveFlower,
   locale = "en",
 }: PaperAreaProps) {
   const prefersReduced = useReducedMotion();
@@ -46,6 +48,7 @@ export default function PaperArea({
         )}
 
         {/* Placed flowers at free positions */}
+        <AnimatePresence>
         {!bouquetMade &&
           placedFlowers.map((placed, index) => {
             const flower = FLOWERS.find((f) => f.id === placed.id);
@@ -55,7 +58,7 @@ export default function PaperArea({
             return (
               <motion.div
                 key={placed.instanceId}
-                className="absolute"
+                className="pointer-events-auto absolute cursor-pointer"
                 style={{
                   left: `${placed.x}%`,
                   top: `${placed.y}%`,
@@ -64,16 +67,24 @@ export default function PaperArea({
                 }}
                 initial={prefersReduced ? false : { scale: 0.5, opacity: 0 }}
                 animate={{ scale: 1, opacity: 1 }}
+                exit={prefersReduced ? { opacity: 0 } : { scale: 0.3, opacity: 0 }}
                 transition={
                   prefersReduced
                     ? { duration: 0.01 }
                     : { type: "spring", stiffness: 120, damping: 10, mass: 0.8 }
                 }
+                whileHover={{ scale: 1.15 }}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onRemoveFlower?.(placed.instanceId);
+                }}
+                title={locale === "nl" ? "Klik om te verwijderen" : "Click to remove"}
               >
                 <FlowerComponent className="h-auto w-8" />
               </motion.div>
             );
           })}
+        </AnimatePresence>
 
         {/* Flowers gathered in bouquet */}
         {bouquetMade &&
