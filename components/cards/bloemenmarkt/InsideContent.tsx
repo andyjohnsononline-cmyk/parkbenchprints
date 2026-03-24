@@ -17,8 +17,9 @@ interface HeldFlower {
   y: number;
 }
 
-// Minimum pixels the pointer must move to count as a drag (vs a click)
-const DRAG_THRESHOLD = 8;
+// Minimum pixels the pointer must move to count as a drag (vs a click).
+// Generous threshold to prevent touch jitter from triggering a drag.
+const DRAG_THRESHOLD = 16;
 
 export default function InsideContent({
   isOpen,
@@ -178,9 +179,14 @@ export default function InsideContent({
       if (modeRef.current !== "holding") return;
 
       if (hasMovedRef.current) {
-        // User dragged: place if on paper, otherwise dismiss
-        tryPlace(e.clientX, e.clientY);
-        dismiss();
+        // User dragged: place if on paper, otherwise keep floating
+        const placed = tryPlace(e.clientX, e.clientY);
+        if (placed) {
+          dismiss();
+        } else {
+          // Drag ended outside paper — don't dismiss, let user keep placing
+          modeRef.current = "floating";
+        }
       } else {
         // User clicked (no significant movement): switch to floating mode
         // Flower stays visible and follows cursor until next click
@@ -296,7 +302,7 @@ export default function InsideContent({
                 : { type: "spring", stiffness: 400, damping: 25 }
             }
           >
-            <heldFlowerInfo.Component className="h-20 w-auto drop-shadow-lg" />
+            <heldFlowerInfo.Component className="h-28 w-auto drop-shadow-lg" />
           </motion.div>
         )}
       </AnimatePresence>

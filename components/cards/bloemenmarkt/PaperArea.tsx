@@ -80,7 +80,7 @@ export default function PaperArea({
                 }}
                 title={locale === "nl" ? "Klik om te verwijderen" : "Click to remove"}
               >
-                <FlowerComponent className="h-12 w-auto" />
+                <FlowerComponent className="h-16 w-auto" />
               </motion.div>
             );
           })}
@@ -114,7 +114,7 @@ export default function PaperArea({
                     : { type: "spring", stiffness: 80, damping: 12, delay: index * 0.05 }
                 }
               >
-                <FlowerComponent className="h-12 w-auto" />
+                <FlowerComponent className="h-16 w-auto" />
               </motion.div>
             );
           })}
