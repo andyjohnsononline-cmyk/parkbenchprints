@@ -1,15 +1,27 @@
 "use client";
 
-import { useCallback, useRef, useState } from "react";
-import { motion, useReducedMotion } from "framer-motion";
-import { FLOWERS } from "./flowers";
-import FlowerBucket from "./FlowerBucket";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
+import { FLOWERS, BUCKET_IDS } from "./flowers";
 import PaperArea, { type PlacedFlower } from "./PaperArea";
 import { type Locale, t } from "@/lib/i18n";
 
 interface InsideContentProps {
   isOpen: boolean;
   locale?: Locale;
+}
+
+interface LiftedFlower {
+  id: string;
+  originX: number;
+  originY: number;
+}
+
+interface PaperRect {
+  top: number;
+  left: number;
+  width: number;
+  height: number;
 }
 
 export default function InsideContent({
@@ -19,7 +31,74 @@ export default function InsideContent({
   const prefersReduced = useReducedMotion();
   const [placedFlowers, setPlacedFlowers] = useState<PlacedFlower[]>([]);
   const [bouquetMade, setBouquetMade] = useState(false);
+  const [liftedFlower, setLiftedFlower] = useState<LiftedFlower | null>(null);
+  const liftedFlowerRef = useRef<LiftedFlower | null>(null);
+  const [rawSvg, setRawSvg] = useState<string>("");
+  const [paperStyle, setPaperStyle] = useState<PaperRect | null>(null);
+  const svgContainerRef = useRef<HTMLDivElement>(null);
   const paperRef = useRef<HTMLDivElement>(null);
+
+  // Fetch the SVG content on mount
+  useEffect(() => {
+    const basePath = process.env.NEXT_PUBLIC_BASE_PATH || "";
+    fetch(`${basePath}/market-scene-v2.svg`)
+      .then((res) => res.text())
+      .then((text) => {
+        // Fix 1: Inject preserveAspectRatio directly into SVG markup
+        const patched = text.replace(
+          "<svg ",
+          '<svg preserveAspectRatio="xMidYMid slice" '
+        );
+        setRawSvg(patched);
+      })
+      .catch(() => {});
+  }, []);
+
+  // Fix 3: Inject a11y attributes into the SVG string so they survive re-renders
+  // (dangerouslySetInnerHTML resets DOM on every render, wiping setAttribute calls)
+  const svgContent = rawSvg
+    ? FLOWERS.reduce((svg, flower) => {
+        const tabindex = isOpen ? "0" : "-1";
+        const label =
+          locale === "nl"
+            ? `Pak ${flower.name.nl}`
+            : `Pick ${flower.name.en}`;
+        return svg.replace(
+          new RegExp(`(<g[^>]*\\bid="${flower.id}")`),
+          `$1 role="button" tabindex="${tabindex}" aria-label="${label}" style="cursor:pointer"`
+        );
+      }, rawSvg)
+    : "";
+
+  // Fix 2: Compute bouquet overlay position from SVG rect
+  useEffect(() => {
+    if (!svgContent || !svgContainerRef.current) return;
+    const container = svgContainerRef.current;
+    const svg = container.querySelector("svg");
+    if (!svg) return;
+
+    const computePaperPosition = () => {
+      const paperRectEl = svg.querySelector("rect");
+      if (!paperRectEl) return;
+
+      const containerBox = container.getBoundingClientRect();
+      const rectBox = paperRectEl.getBoundingClientRect();
+
+      setPaperStyle({
+        top: rectBox.top - containerBox.top,
+        left: rectBox.left - containerBox.left,
+        width: rectBox.width,
+        height: rectBox.height,
+      });
+    };
+
+    computePaperPosition();
+
+    const observer = new ResizeObserver(computePaperPosition);
+    observer.observe(container);
+
+    return () => observer.disconnect();
+  }, [svgContent]);
 
   const handlePick = useCallback((flowerId: string, x: number, y: number) => {
     setPlacedFlowers((prev) => {
@@ -37,24 +116,97 @@ export default function InsideContent({
     setBouquetMade(false);
   }, []);
 
+  // Click on SVG bucket → lift a flower out
+  const handleSvgClick = useCallback(
+    (e: React.MouseEvent) => {
+      if (!isOpen) return;
+      const target = e.target as Element;
+      // Walk up to find a bucket group
+      for (const bucketId of BUCKET_IDS) {
+        const bucketEl = target.closest(`#${bucketId}`);
+        if (bucketEl) {
+          e.stopPropagation();
+          const rect = bucketEl.getBoundingClientRect();
+          const lifted = {
+            id: bucketId,
+            originX: rect.left + rect.width / 2,
+            originY: rect.top + rect.height * 0.3,
+          };
+          liftedFlowerRef.current = lifted;
+          setLiftedFlower(lifted);
+          return;
+        }
+      }
+    },
+    [isOpen]
+  );
+
+  // Keyboard support on bucket groups
+  const handleSvgKeyDown = useCallback(
+    (e: React.KeyboardEvent) => {
+      if (!isOpen) return;
+      if (e.key !== "Enter" && e.key !== " ") return;
+      const target = e.target as Element;
+      const id = target.id;
+      if (BUCKET_IDS.includes(id)) {
+        e.preventDefault();
+        e.stopPropagation();
+        handlePick(id, 50, 50);
+      }
+    },
+    [isOpen, handlePick]
+  );
+
+  // Drag end for lifted flower
+  const handleDragEnd = useCallback(
+    (_: unknown, info: { point: { x: number; y: number } }) => {
+      const current = liftedFlowerRef.current;
+      if (!paperRef.current || !current) {
+        liftedFlowerRef.current = null;
+        setLiftedFlower(null);
+        return;
+      }
+      const paperRect = paperRef.current.getBoundingClientRect();
+      const { x, y } = info.point;
+
+      if (
+        x >= paperRect.left &&
+        x <= paperRect.right &&
+        y >= paperRect.top &&
+        y <= paperRect.bottom
+      ) {
+        const pctX = ((x - paperRect.left) / paperRect.width) * 100;
+        const pctY = ((y - paperRect.top) / paperRect.height) * 100;
+        handlePick(current.id, pctX, pctY);
+      }
+      liftedFlowerRef.current = null;
+      setLiftedFlower(null);
+    },
+    [handlePick]
+  );
+
+  // Resolve the flower component for the lifted flower
+  const liftedFlowerInfo = liftedFlower
+    ? FLOWERS.find((f) => f.id === liftedFlower.id)
+    : null;
+
   return (
     <div className="relative flex h-full flex-col bg-[#FFF8F0]">
-      {/* Market scene background — top portion */}
+      {/* Full SVG scene — market + bouquet area */}
       <div className="relative flex-1" style={{ minHeight: 0 }}>
-        {/* Scene SVG as background image */}
+        {/* Inline SVG via fetch + dangerouslySetInnerHTML */}
         <div
-          className="absolute inset-0 overflow-hidden"
-          style={{
-            backgroundImage: `url(${process.env.NEXT_PUBLIC_BASE_PATH || ""}/market-scene.svg)`,
-            backgroundSize: "cover",
-            backgroundPosition: "center 60%",
-            backgroundRepeat: "no-repeat",
-          }}
+          ref={svgContainerRef}
+          className="market-svg-container absolute inset-0 overflow-hidden"
+          data-hint={isOpen && placedFlowers.length === 0 ? "true" : undefined}
+          onClick={handleSvgClick}
+          onKeyDown={handleSvgKeyDown}
+          dangerouslySetInnerHTML={svgContent ? { __html: svgContent } : undefined}
         />
 
         {/* Drag hint overlay */}
         <motion.p
-          className="relative z-10 pt-2 text-center text-[10px] tracking-wider text-white/70 uppercase drop-shadow-sm"
+          className="pointer-events-none relative z-10 pt-2 text-center text-xs tracking-wider text-white/70 uppercase drop-shadow-sm"
           animate={{
             opacity:
               isOpen && placedFlowers.length === 0
@@ -72,38 +224,61 @@ export default function InsideContent({
           {t("bloemen.dragHint", locale)}
         </motion.p>
 
-        {/* Flower buckets overlaid on the scene */}
-        <div className="relative z-10 flex h-full items-end justify-center px-2 pb-2">
-          <div className="flex flex-wrap items-end justify-center gap-x-1 gap-y-1">
-            {FLOWERS.map((flower, index) => (
-              <FlowerBucket
-                key={flower.id}
-                flower={flower}
-                index={index}
-                isOpen={isOpen}
-                onPick={handlePick}
-                paperRef={paperRef}
-                locale={locale}
-              />
-            ))}
+        {/* Fix 2 + Fix 3: Bouquet overlay — dynamically positioned from SVG rect,
+            pointer-events: none so bucket clicks pass through */}
+        {paperStyle && (
+          <div
+            ref={paperRef}
+            className="pointer-events-none absolute z-10"
+            style={{
+              top: paperStyle.top,
+              left: paperStyle.left,
+              width: paperStyle.width,
+              height: paperStyle.height,
+            }}
+          >
+            <PaperArea
+              placedFlowers={placedFlowers}
+              bouquetMade={bouquetMade}
+              onMakeBouquet={handleMakeBouquet}
+              onReset={handleReset}
+              locale={locale}
+            />
           </div>
-        </div>
+        )}
       </div>
 
-      {/* Divider */}
-      <div className="mx-auto h-px w-16 bg-accent/20" />
-
-      {/* Paper area — drop zone at bottom */}
-      <div className="px-3 pb-3 pt-1">
-        <PaperArea
-          ref={paperRef}
-          placedFlowers={placedFlowers}
-          bouquetMade={bouquetMade}
-          onMakeBouquet={handleMakeBouquet}
-          onReset={handleReset}
-          locale={locale}
-        />
-      </div>
+      {/* Lifted flower — floating draggable element */}
+      <AnimatePresence>
+        {liftedFlower && liftedFlowerInfo && (
+          <motion.div
+            key={`lifted-${liftedFlower.id}`}
+            className="pointer-events-auto fixed z-50 cursor-grab active:cursor-grabbing"
+            style={{
+              left: liftedFlower.originX,
+              top: liftedFlower.originY,
+              transform: "translate(-50%, -50%)",
+              touchAction: "none",
+            }}
+            initial={prefersReduced ? false : { scale: 0.5, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            exit={prefersReduced ? { opacity: 0 } : { scale: 0.5, opacity: 0 }}
+            transition={
+              prefersReduced
+                ? { duration: 0.01 }
+                : { type: "spring", stiffness: 300, damping: 20 }
+            }
+            drag
+            dragSnapToOrigin
+            dragElastic={0.15}
+            onDragEnd={handleDragEnd}
+            whileDrag={prefersReduced ? {} : { scale: 1.05, zIndex: 60 }}
+            onPointerDown={(e: React.PointerEvent) => e.stopPropagation()}
+          >
+            <liftedFlowerInfo.Component className="h-auto w-12 drop-shadow-md" />
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

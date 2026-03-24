@@ -6,13 +6,17 @@ import {
   useReducedMotion,
   type Variants,
 } from "framer-motion";
-import { useState, useCallback, type ReactNode } from "react";
+import { useState, useCallback, useEffect, type ReactNode } from "react";
 
 interface GatefoldShellProps {
   frontLeft: ReactNode;
   frontRight: ReactNode;
   insideContent: ReactNode;
+  /** Controlled open state — if provided, the shell is controlled externally */
+  open?: boolean;
   onOpenChange?: (isOpen: boolean) => void;
+  /** When true, clicking the card body does not toggle open/close */
+  disableToggle?: boolean;
   className?: string;
 }
 
@@ -52,30 +56,40 @@ export default function GatefoldShell({
   frontLeft,
   frontRight,
   insideContent,
+  open: controlledOpen,
   onOpenChange,
+  disableToggle = false,
   className = "",
 }: GatefoldShellProps) {
-  const [isOpen, setIsOpen] = useState(false);
+  const [internalOpen, setInternalOpen] = useState(false);
+  const isControlled = controlledOpen !== undefined;
+  const isOpen = isControlled ? controlledOpen : internalOpen;
   const controls = useAnimation();
   const prefersReduced = useReducedMotion();
 
+  // Sync animation controls with open state
+  useEffect(() => {
+    controls.start(isOpen ? "open" : "closed");
+  }, [isOpen, controls]);
+
   const toggle = useCallback(() => {
     const next = !isOpen;
-    setIsOpen(next);
-    controls.start(next ? "open" : "closed");
+    if (!isControlled) {
+      setInternalOpen(next);
+    }
     onOpenChange?.(next);
-  }, [isOpen, controls, onOpenChange]);
+  }, [isOpen, isControlled, onOpenChange]);
 
   return (
     <div className={`flex items-center justify-center ${className}`}>
       <div
-        className="relative cursor-pointer select-none"
+        className={`relative select-none ${disableToggle ? "" : "cursor-pointer"}`}
         style={{ perspective: "1200px" }}
-        onClick={toggle}
-        role="button"
-        tabIndex={0}
-        aria-label={isOpen ? "Close card" : "Open card"}
-        onKeyDown={(e) => {
+        onClick={disableToggle ? undefined : toggle}
+        role={disableToggle ? undefined : "button"}
+        tabIndex={disableToggle ? undefined : 0}
+        aria-label={disableToggle ? undefined : isOpen ? "Close card" : "Open card"}
+        onKeyDown={disableToggle ? undefined : (e) => {
           if (e.key === "Enter" || e.key === " ") {
             e.preventDefault();
             toggle();
