@@ -65,7 +65,7 @@ export default function BloemenmarktPage() {
           {isOpen && (
             <motion.button
               type="button"
-              className="absolute -top-10 left-1/2 z-40 -translate-x-1/2 border-b border-foreground/30 pb-1 text-xs tracking-[0.15em] text-accent uppercase transition-colors hover:border-accent hover:text-accent focus-visible:outline-2 focus-visible:outline-accent"
+              className="absolute -top-8 left-1/2 z-40 -translate-x-1/2 border-b border-foreground/30 pb-1 text-sm tracking-[0.15em] text-accent uppercase transition-colors hover:border-accent hover:text-accent focus-visible:outline-2 focus-visible:outline-accent"
               initial={prefersReduced ? false : { opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               exit={prefersReduced ? { opacity: 0 } : { opacity: 0, y: 10 }}
