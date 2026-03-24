@@ -221,12 +221,12 @@ export default function InsideContent({
           {t("bloemen.dragHint", locale)}
         </motion.p>
 
-        {/* Bouquet overlay — covers the paper area in the lower portion of the SVG,
-            pointer-events: none so bucket clicks pass through */}
+        {/* Bouquet overlay — positioned over the market paper in the SVG scene
+            (upper-right area). pointer-events: none so bucket clicks pass through */}
         <div
           ref={paperRef}
-          className="pointer-events-none absolute right-0 bottom-0 left-0 z-10"
-          style={{ height: "55%" }}
+          className="pointer-events-none absolute z-10"
+          style={{ left: "74%", top: "2%", width: "24%", height: "50%" }}
         >
           <PaperArea
             placedFlowers={placedFlowers}

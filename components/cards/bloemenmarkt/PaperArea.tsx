@@ -119,10 +119,10 @@ export default function PaperArea({
             );
           })}
 
-        {/* Controls overlaid at bottom of paper area */}
+        {/* Controls positioned below the paper area so they don't cover art */}
         {!isEmpty && (
           <motion.div
-            className="pointer-events-auto absolute right-0 bottom-2 left-0 z-20 flex items-center justify-center gap-3"
+            className="pointer-events-auto absolute -bottom-8 right-0 left-0 z-20 flex items-center justify-center gap-3"
             initial={prefersReduced ? false : { opacity: 0, y: 5 }}
             animate={{ opacity: 1, y: 0 }}
             transition={
@@ -165,7 +165,7 @@ export default function PaperArea({
         {/* Completion message */}
         {bouquetMade && (
           <motion.p
-            className="absolute right-0 bottom-8 left-0 z-20 text-center font-serif text-base text-accent"
+            className="absolute -bottom-16 right-0 left-0 z-20 text-center font-serif text-base text-accent"
             initial={prefersReduced ? false : { opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={
