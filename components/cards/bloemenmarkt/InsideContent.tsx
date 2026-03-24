@@ -11,10 +11,10 @@ interface InsideContentProps {
   locale?: Locale;
 }
 
-interface LiftedFlower {
+interface HeldFlower {
   id: string;
-  originX: number;
-  originY: number;
+  x: number;
+  y: number;
 }
 
 export default function InsideContent({
@@ -24,8 +24,8 @@ export default function InsideContent({
   const prefersReduced = useReducedMotion();
   const [placedFlowers, setPlacedFlowers] = useState<PlacedFlower[]>([]);
   const [bouquetMade, setBouquetMade] = useState(false);
-  const [liftedFlower, setLiftedFlower] = useState<LiftedFlower | null>(null);
-  const liftedFlowerRef = useRef<LiftedFlower | null>(null);
+  const [heldFlower, setHeldFlower] = useState<HeldFlower | null>(null);
+  const heldFlowerRef = useRef<HeldFlower | null>(null);
   const [rawSvg, setRawSvg] = useState<string>("");
   const svgContainerRef = useRef<HTMLDivElement>(null);
   const paperRef = useRef<HTMLDivElement>(null);
@@ -36,7 +36,6 @@ export default function InsideContent({
     fetch(`${basePath}/market-scene-v3.svg`)
       .then((res) => res.text())
       .then((text) => {
-        // Inject preserveAspectRatio directly into SVG markup
         const patched = text.replace(
           "<svg ",
           '<svg preserveAspectRatio="xMidYMid slice" '
@@ -46,8 +45,7 @@ export default function InsideContent({
       .catch(() => {});
   }, []);
 
-  // Fix 3: Inject a11y attributes into the SVG string so they survive re-renders
-  // (dangerouslySetInnerHTML resets DOM on every render, wiping setAttribute calls)
+  // Inject a11y attributes into bucket groups
   const svgContent = rawSvg
     ? FLOWERS.reduce((svg, flower) => {
         const tabindex = isOpen ? "0" : "-1";
@@ -82,30 +80,25 @@ export default function InsideContent({
     setPlacedFlowers((prev) => prev.filter((f) => f.instanceId !== instanceId));
   }, []);
 
-  // Click on SVG bucket → place flower directly into bouquet
-  // (Simpler and more reliable than lift-then-drag for click interactions)
-  const handleSvgClick = useCallback(
-    (e: React.MouseEvent) => {
+  // --- "Pull from bucket" interaction ---
+  // pointerdown on bucket → flower appears at pointer → follows pointer → pointerup places it
+
+  const handleSvgPointerDown = useCallback(
+    (e: React.PointerEvent) => {
       if (!isOpen) return;
       const target = e.target as Element;
-      // Walk up to find a bucket group
       for (const bucketId of BUCKET_IDS) {
         const bucketEl = target.closest(`#${bucketId}`);
         if (bucketEl) {
+          e.preventDefault();
           e.stopPropagation();
-          // Dismiss any existing lifted flower
-          if (liftedFlowerRef.current) {
-            liftedFlowerRef.current = null;
-            setLiftedFlower(null);
-          }
-          const rect = bucketEl.getBoundingClientRect();
-          const lifted = {
+          const held: HeldFlower = {
             id: bucketId,
-            originX: rect.left + rect.width / 2,
-            originY: rect.top + rect.height * 0.3,
+            x: e.clientX,
+            y: e.clientY,
           };
-          liftedFlowerRef.current = lifted;
-          setLiftedFlower(lifted);
+          heldFlowerRef.current = held;
+          setHeldFlower(held);
           return;
         }
       }
@@ -113,33 +106,27 @@ export default function InsideContent({
     [isOpen]
   );
 
-  // Keyboard support on bucket groups
-  const handleSvgKeyDown = useCallback(
-    (e: React.KeyboardEvent) => {
-      if (!isOpen) return;
-      if (e.key !== "Enter" && e.key !== " ") return;
-      const target = e.target as Element;
-      const id = target.id;
-      if (BUCKET_IDS.includes(id)) {
-        e.preventDefault();
-        e.stopPropagation();
-        handlePick(id, 50, 50);
-      }
-    },
-    [isOpen, handlePick]
-  );
+  // Track pointer movement while holding a flower
+  useEffect(() => {
+    if (!heldFlowerRef.current) return;
 
-  // Drag end for lifted flower
-  const handleDragEnd = useCallback(
-    (_: unknown, info: { point: { x: number; y: number } }) => {
-      const current = liftedFlowerRef.current;
-      if (!paperRef.current || !current) {
-        liftedFlowerRef.current = null;
-        setLiftedFlower(null);
+    const handleMove = (e: PointerEvent) => {
+      if (!heldFlowerRef.current) return;
+      const updated = { ...heldFlowerRef.current, x: e.clientX, y: e.clientY };
+      heldFlowerRef.current = updated;
+      setHeldFlower(updated);
+    };
+
+    const handleUp = (e: PointerEvent) => {
+      const current = heldFlowerRef.current;
+      if (!current || !paperRef.current) {
+        heldFlowerRef.current = null;
+        setHeldFlower(null);
         return;
       }
+
       const paperRect = paperRef.current.getBoundingClientRect();
-      const { x, y } = info.point;
+      const { clientX: x, clientY: y } = e;
 
       if (
         x >= paperRect.left &&
@@ -151,41 +138,39 @@ export default function InsideContent({
         const pctY = ((y - paperRect.top) / paperRect.height) * 100;
         handlePick(current.id, pctX, pctY);
       }
-      liftedFlowerRef.current = null;
-      setLiftedFlower(null);
+      // else: dropped outside paper — flower disappears (back to bucket)
+
+      heldFlowerRef.current = null;
+      setHeldFlower(null);
+    };
+
+    window.addEventListener("pointermove", handleMove);
+    window.addEventListener("pointerup", handleUp);
+    return () => {
+      window.removeEventListener("pointermove", handleMove);
+      window.removeEventListener("pointerup", handleUp);
+    };
+  }, [heldFlower, handlePick]);
+
+  // Keyboard support on bucket groups (direct place for a11y)
+  const handleSvgKeyDown = useCallback(
+    (e: React.KeyboardEvent) => {
+      if (!isOpen) return;
+      if (e.key !== "Enter" && e.key !== " ") return;
+      const target = e.target as Element;
+      const id = target.id;
+      if (BUCKET_IDS.includes(id)) {
+        e.preventDefault();
+        e.stopPropagation();
+        handlePick(id, 30 + Math.random() * 40, 20 + Math.random() * 40);
+      }
     },
-    [handlePick]
+    [isOpen, handlePick]
   );
 
-  // Auto-dismiss lifted flower after timeout — just dismiss, don't place
-  useEffect(() => {
-    if (!liftedFlower) return;
-    const timer = setTimeout(() => {
-      liftedFlowerRef.current = null;
-      setLiftedFlower(null);
-    }, 6000);
-    return () => clearTimeout(timer);
-  }, [liftedFlower]);
-
-  // Click on lifted flower → place in paper with slight random spread
-  const handleLiftedClick = useCallback(() => {
-    const current = liftedFlowerRef.current;
-    if (current) {
-      const count = placedFlowers.length;
-      // Spread flowers across the paper area evenly with slight jitter
-      const baseX = 25 + (count % 4) * 17;
-      const baseY = 25 + Math.floor(count / 4) * 20;
-      const jitterX = (Math.random() - 0.5) * 10;
-      const jitterY = (Math.random() - 0.5) * 10;
-      handlePick(current.id, baseX + jitterX, baseY + jitterY);
-    }
-    liftedFlowerRef.current = null;
-    setLiftedFlower(null);
-  }, [handlePick, placedFlowers.length]);
-
-  // Resolve the flower component for the lifted flower
-  const liftedFlowerInfo = liftedFlower
-    ? FLOWERS.find((f) => f.id === liftedFlower.id)
+  // Resolve the flower component for the held flower
+  const heldFlowerInfo = heldFlower
+    ? FLOWERS.find((f) => f.id === heldFlower.id)
     : null;
 
   return (
@@ -196,7 +181,7 @@ export default function InsideContent({
           ref={svgContainerRef}
           className="market-svg-container absolute inset-0 overflow-hidden"
           data-hint={isOpen && placedFlowers.length === 0 ? "true" : undefined}
-          onClick={handleSvgClick}
+          onPointerDown={handleSvgPointerDown}
           onKeyDown={handleSvgKeyDown}
           dangerouslySetInnerHTML={svgContent ? { __html: svgContent } : undefined}
         />
@@ -221,8 +206,7 @@ export default function InsideContent({
           {t("bloemen.dragHint", locale)}
         </motion.p>
 
-        {/* Bouquet overlay — positioned over the market paper in the SVG scene
-            (upper-right area). pointer-events: none so bucket clicks pass through */}
+        {/* Bouquet overlay — positioned over the market paper in the SVG scene */}
         <div
           ref={paperRef}
           className="pointer-events-none absolute z-10"
@@ -239,34 +223,27 @@ export default function InsideContent({
         </div>
       </div>
 
-      {/* Lifted flower — floating draggable element */}
+      {/* Held flower — follows pointer while button is pressed */}
       <AnimatePresence>
-        {liftedFlower && liftedFlowerInfo && (
+        {heldFlower && heldFlowerInfo && (
           <motion.div
-            key={`lifted-${liftedFlower.id}`}
-            className="pointer-events-auto fixed z-50 cursor-grab active:cursor-grabbing"
+            key={`held-${heldFlower.id}`}
+            className="pointer-events-none fixed z-50"
             style={{
-              left: liftedFlower.originX,
-              top: liftedFlower.originY,
-              transform: "translate(-50%, -50%)",
-              touchAction: "none",
+              left: heldFlower.x,
+              top: heldFlower.y,
+              transform: "translate(-50%, -80%)",
             }}
-            initial={prefersReduced ? false : { scale: 0.5, opacity: 0 }}
+            initial={prefersReduced ? false : { scale: 0.3, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
-            exit={prefersReduced ? { opacity: 0 } : { scale: 0.5, opacity: 0 }}
+            exit={prefersReduced ? { opacity: 0 } : { scale: 0.5, opacity: 0, transition: { duration: 0.15 } }}
             transition={
               prefersReduced
                 ? { duration: 0.01 }
-                : { type: "spring", stiffness: 300, damping: 20 }
+                : { type: "spring", stiffness: 400, damping: 25 }
             }
-            drag
-            dragMomentum={false}
-            onDragEnd={handleDragEnd}
-            whileDrag={prefersReduced ? {} : { scale: 1.05, zIndex: 60 }}
-            onPointerDown={(e: React.PointerEvent) => e.stopPropagation()}
-            onClick={handleLiftedClick}
           >
-            <liftedFlowerInfo.Component className="h-20 w-auto drop-shadow-md" />
+            <heldFlowerInfo.Component className="h-20 w-auto drop-shadow-lg" />
           </motion.div>
         )}
       </AnimatePresence>
