@@ -70,7 +70,7 @@ export default function InsideContent({
       }, rawSvg)
     : "";
 
-  // Fix 2: Compute bouquet overlay position from SVG rect
+  // Compute bouquet overlay position from SVG rect
   useEffect(() => {
     if (!svgContent || !svgContainerRef.current) return;
     const container = svgContainerRef.current;
@@ -84,6 +84,10 @@ export default function InsideContent({
       const containerBox = container.getBoundingClientRect();
       const rectBox = paperRectEl.getBoundingClientRect();
 
+      // Guard: skip if dimensions are 0 (SVG not rendered yet)
+      if (rectBox.width <= 0 || rectBox.height <= 0) return;
+      if (containerBox.width <= 0 || containerBox.height <= 0) return;
+
       setPaperStyle({
         top: rectBox.top - containerBox.top,
         left: rectBox.left - containerBox.left,
@@ -92,13 +96,22 @@ export default function InsideContent({
       });
     };
 
+    // Initial computation + delayed recompute for transitions
     computePaperPosition();
+    const delayed = setTimeout(computePaperPosition, 100);
 
-    const observer = new ResizeObserver(computePaperPosition);
+    const observer = new ResizeObserver(() => {
+      computePaperPosition();
+      // Recompute after CSS transitions settle
+      setTimeout(computePaperPosition, 700);
+    });
     observer.observe(container);
 
-    return () => observer.disconnect();
-  }, [svgContent]);
+    return () => {
+      clearTimeout(delayed);
+      observer.disconnect();
+    };
+  }, [svgContent, isOpen]);
 
   const handlePick = useCallback((flowerId: string, x: number, y: number) => {
     setPlacedFlowers((prev) => {
@@ -116,7 +129,8 @@ export default function InsideContent({
     setBouquetMade(false);
   }, []);
 
-  // Click on SVG bucket → lift a flower out
+  // Click on SVG bucket → place flower directly into bouquet
+  // (Simpler and more reliable than lift-then-drag for click interactions)
   const handleSvgClick = useCallback(
     (e: React.MouseEvent) => {
       if (!isOpen) return;
@@ -126,6 +140,11 @@ export default function InsideContent({
         const bucketEl = target.closest(`#${bucketId}`);
         if (bucketEl) {
           e.stopPropagation();
+          // Dismiss any existing lifted flower
+          if (liftedFlowerRef.current) {
+            liftedFlowerRef.current = null;
+            setLiftedFlower(null);
+          }
           const rect = bucketEl.getBoundingClientRect();
           const lifted = {
             id: bucketId,
@@ -184,6 +203,31 @@ export default function InsideContent({
     },
     [handlePick]
   );
+
+  // Auto-dismiss lifted flower after timeout — prevents blocking
+  useEffect(() => {
+    if (!liftedFlower) return;
+    const timer = setTimeout(() => {
+      // Auto-place at random position in paper if still lifted
+      const current = liftedFlowerRef.current;
+      if (current) {
+        handlePick(current.id, 20 + Math.random() * 60, 20 + Math.random() * 60);
+      }
+      liftedFlowerRef.current = null;
+      setLiftedFlower(null);
+    }, 4000);
+    return () => clearTimeout(timer);
+  }, [liftedFlower, handlePick]);
+
+  // Click on lifted flower → auto-place in paper
+  const handleLiftedClick = useCallback(() => {
+    const current = liftedFlowerRef.current;
+    if (current) {
+      handlePick(current.id, 20 + Math.random() * 60, 20 + Math.random() * 60);
+    }
+    liftedFlowerRef.current = null;
+    setLiftedFlower(null);
+  }, [handlePick]);
 
   // Resolve the flower component for the lifted flower
   const liftedFlowerInfo = liftedFlower
@@ -274,6 +318,7 @@ export default function InsideContent({
             onDragEnd={handleDragEnd}
             whileDrag={prefersReduced ? {} : { scale: 1.05, zIndex: 60 }}
             onPointerDown={(e: React.PointerEvent) => e.stopPropagation()}
+            onClick={handleLiftedClick}
           >
             <liftedFlowerInfo.Component className="h-auto w-12 drop-shadow-md" />
           </motion.div>

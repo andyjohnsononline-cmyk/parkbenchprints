@@ -17,6 +17,8 @@ interface GatefoldShellProps {
   onOpenChange?: (isOpen: boolean) => void;
   /** When true, clicking the card body does not toggle open/close */
   disableToggle?: boolean;
+  /** Override the card container style (width, height, aspectRatio) */
+  cardStyle?: React.CSSProperties;
   className?: string;
 }
 
@@ -59,6 +61,7 @@ export default function GatefoldShell({
   open: controlledOpen,
   onOpenChange,
   disableToggle = false,
+  cardStyle,
   className = "",
 }: GatefoldShellProps) {
   const [internalOpen, setInternalOpen] = useState(false);
@@ -99,9 +102,11 @@ export default function GatefoldShell({
         <div
           className="relative rounded-lg shadow-2xl"
           style={{
-            width: "min(80vw, 500px)",
-            aspectRatio: "5 / 7",
+            width: cardStyle?.width ?? "min(80vw, 500px)",
+            aspectRatio: cardStyle?.aspectRatio ?? "5 / 7",
+            height: cardStyle?.height,
             transformStyle: "preserve-3d",
+            transition: prefersReduced ? "none" : "width 0.6s ease, height 0.6s ease, aspect-ratio 0.6s ease",
           }}
         >
           {/* Inside panel (revealed when covers open) */}

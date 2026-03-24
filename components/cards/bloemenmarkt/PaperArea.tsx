@@ -138,72 +138,72 @@ export default function PaperArea({
               </motion.div>
             );
           })}
-      </div>
 
-      {/* Controls below flowers */}
-      {!isEmpty && (
-        <motion.div
-          className="pointer-events-auto mt-2 flex items-center justify-center gap-3"
-          initial={prefersReduced ? false : { opacity: 0, y: 5 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={
-            prefersReduced ? { duration: 0.01 } : { duration: 0.3 }
-          }
-        >
-          <p className="text-xs tracking-wider text-foreground/40 uppercase">
-            {placedFlowers.length}{" "}
-            {placedFlowers.length === 1
-              ? locale === "nl"
-                ? "bloem"
-                : "flower"
-              : locale === "nl"
-                ? "bloemen"
-                : "flowers"}
-          </p>
+        {/* Controls overlaid at bottom of paper area */}
+        {!isEmpty && (
+          <motion.div
+            className="pointer-events-auto absolute right-0 bottom-2 left-0 z-20 flex items-center justify-center gap-3"
+            initial={prefersReduced ? false : { opacity: 0, y: 5 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={
+              prefersReduced ? { duration: 0.01 } : { duration: 0.3 }
+            }
+          >
+            <p className="text-xs tracking-wider text-foreground/40 uppercase">
+              {placedFlowers.length}{" "}
+              {placedFlowers.length === 1
+                ? locale === "nl"
+                  ? "bloem"
+                  : "flower"
+                : locale === "nl"
+                  ? "bloemen"
+                  : "flowers"}
+            </p>
 
-          {!bouquetMade && (
+            {!bouquetMade && (
+              <button
+                type="button"
+                className="rounded bg-accent/10 px-3 py-1 text-xs tracking-[0.1em] text-accent uppercase transition-colors hover:bg-accent/20 focus-visible:outline-2 focus-visible:outline-accent"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onMakeBouquet();
+                }}
+                onPointerDown={(e: React.PointerEvent) => e.stopPropagation()}
+              >
+                {t("bloemen.makeBouquet", locale)}
+              </button>
+            )}
+
             <button
               type="button"
-              className="rounded bg-accent/10 px-3 py-1 text-xs tracking-[0.1em] text-accent uppercase transition-colors hover:bg-accent/20 focus-visible:outline-2 focus-visible:outline-accent"
+              className="text-xs tracking-[0.1em] text-accent/60 uppercase transition-colors hover:text-accent focus-visible:outline-2 focus-visible:outline-accent"
               onClick={(e) => {
                 e.stopPropagation();
-                onMakeBouquet();
+                onReset();
               }}
               onPointerDown={(e: React.PointerEvent) => e.stopPropagation()}
             >
-              {t("bloemen.makeBouquet", locale)}
+              {t("bloemen.reset", locale)}
             </button>
-          )}
+          </motion.div>
+        )}
 
-          <button
-            type="button"
-            className="text-xs tracking-[0.1em] text-accent/60 uppercase transition-colors hover:text-accent focus-visible:outline-2 focus-visible:outline-accent"
-            onClick={(e) => {
-              e.stopPropagation();
-              onReset();
-            }}
-            onPointerDown={(e: React.PointerEvent) => e.stopPropagation()}
+        {/* Completion message */}
+        {bouquetMade && (
+          <motion.p
+            className="absolute right-0 bottom-8 left-0 z-20 text-center font-serif text-base text-accent"
+            initial={prefersReduced ? false : { opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={
+              prefersReduced
+                ? { duration: 0.01 }
+                : { type: "spring", stiffness: 120, damping: 10, delay: 0.3 }
+            }
           >
-            {t("bloemen.reset", locale)}
-          </button>
-        </motion.div>
-      )}
-
-      {/* Completion message */}
-      {bouquetMade && (
-        <motion.p
-          className="mt-2 text-center font-serif text-base text-accent"
-          initial={prefersReduced ? false : { opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={
-            prefersReduced
-              ? { duration: 0.01 }
-              : { type: "spring", stiffness: 120, damping: 10, delay: 0.3 }
-          }
-        >
-          {t("bloemen.complete", locale)}
-        </motion.p>
-      )}
+            {t("bloemen.complete", locale)}
+          </motion.p>
+        )}
+      </div>
 
       {/* Live region for screen reader */}
       <div aria-live="polite" className="sr-only">

@@ -16,7 +16,7 @@ export default function BloemenmarktPage() {
   }, []);
 
   return (
-    <section className="relative min-h-screen overflow-hidden pt-32 pb-20">
+    <section className={`relative min-h-screen overflow-hidden ${isOpen ? "pt-16 pb-10" : "pt-32 pb-20"}`}>
       <div
         className="pointer-events-none absolute inset-0 opacity-[0.03]"
         style={{
@@ -81,6 +81,11 @@ export default function BloemenmarktPage() {
           open={isOpen}
           onOpenChange={handleOpenChange}
           disableToggle={isOpen}
+          cardStyle={
+            isOpen
+              ? { width: "min(95vw, 960px)", aspectRatio: "4 / 3" }
+              : { width: "min(80vw, 500px)", aspectRatio: "5 / 7" }
+          }
           frontLeft={<FrontLeft />}
           frontRight={<FrontRight />}
           insideContent={<InsideContent isOpen={isOpen} />}
