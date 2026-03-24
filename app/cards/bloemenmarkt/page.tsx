@@ -83,7 +83,7 @@ export default function BloemenmarktPage() {
           disableToggle={isOpen}
           cardStyle={
             isOpen
-              ? { width: "min(95vw, 960px)", aspectRatio: "4 / 3" }
+              ? { width: "min(95vw, 1100px)", aspectRatio: "1776 / 764" }
               : { width: "min(80vw, 500px)", aspectRatio: "5 / 7" }
           }
           frontLeft={<FrontLeft />}

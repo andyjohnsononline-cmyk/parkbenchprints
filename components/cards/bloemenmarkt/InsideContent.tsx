@@ -33,7 +33,7 @@ export default function InsideContent({
   // Fetch the SVG content on mount
   useEffect(() => {
     const basePath = process.env.NEXT_PUBLIC_BASE_PATH || "";
-    fetch(`${basePath}/market-scene-v2.svg`)
+    fetch(`${basePath}/market-scene-v3.svg`)
       .then((res) => res.text())
       .then((text) => {
         // Inject preserveAspectRatio directly into SVG markup
