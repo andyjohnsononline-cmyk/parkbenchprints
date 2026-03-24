@@ -44,10 +44,15 @@ export default function InsideContent({
     fetch(`${basePath}/market-scene-v2.svg`)
       .then((res) => res.text())
       .then((text) => {
-        // Fix 1: Inject preserveAspectRatio directly into SVG markup
-        const patched = text.replace(
+        // Inject preserveAspectRatio directly into SVG markup
+        let patched = text.replace(
           "<svg ",
           '<svg preserveAspectRatio="xMidYMid slice" '
+        );
+        // Hide the large white rect (cls-26) — we overlay market-paper.svg instead
+        patched = patched.replace(
+          /(<rect class="cls-26"[^/]*)\/?>/,
+          '$1 opacity="0"/>'
         );
         setRawSvg(patched);
       })

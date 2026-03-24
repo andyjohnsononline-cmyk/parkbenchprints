@@ -29,6 +29,7 @@ export default function PaperArea({
 }: PaperAreaProps) {
   const prefersReduced = useReducedMotion();
   const isEmpty = placedFlowers.length === 0;
+  const basePath = process.env.NEXT_PUBLIC_BASE_PATH || "";
 
   return (
     <div
@@ -36,42 +37,20 @@ export default function PaperArea({
       aria-label={locale === "nl" ? "Jouw boeket" : "Your bouquet"}
       className="pointer-events-none relative h-full w-full"
     >
-      {/* Drop zone with paper texture and visual personality */}
-      <div
-        className="relative flex h-full w-full items-center justify-center overflow-hidden rounded-md"
-        style={{
-          background: isEmpty && !bouquetMade
-            ? "linear-gradient(135deg, rgba(255,248,240,0.6) 0%, rgba(245,237,227,0.5) 100%)"
-            : "linear-gradient(135deg, rgba(255,248,240,0.3) 0%, rgba(245,237,227,0.2) 100%)",
-          boxShadow: "inset 0 2px 8px rgba(139, 115, 85, 0.08)",
-        }}
-      >
-        {/* Dashed drop-target border — visible when empty, fades when flowers placed */}
-        <AnimatePresence>
-          {isEmpty && !bouquetMade && (
-            <motion.div
-              className="pointer-events-none absolute inset-2 rounded border border-dashed border-accent/20"
-              initial={false}
-              animate={{ opacity: 1 }}
-              exit={prefersReduced ? { opacity: 0 } : { opacity: 0, scale: 0.98 }}
-              transition={{ duration: 0.3 }}
-            />
-          )}
-        </AnimatePresence>
-
-        {/* Subtle dot-grid texture */}
-        <div
-          className="pointer-events-none absolute inset-0 opacity-[0.025]"
-          style={{
-            backgroundImage:
-              "radial-gradient(circle, var(--foreground) 0.5px, transparent 0.5px)",
-            backgroundSize: "12px 12px",
-          }}
+      {/* Market paper shape from designer SVG */}
+      <div className="relative flex h-full w-full items-center justify-center">
+        {/* The actual paper SVG as background */}
+        <img
+          src={`${basePath}/market-paper.svg`}
+          alt=""
+          aria-hidden="true"
+          className="absolute inset-0 h-full w-full object-contain drop-shadow-sm"
+          draggable={false}
         />
 
-        {/* Empty state hint — serif font for warmth */}
+        {/* Empty state hint */}
         {isEmpty && !bouquetMade && (
-          <p className="relative z-10 font-serif text-sm tracking-wide text-foreground/20 italic">
+          <p className="relative z-10 font-serif text-sm tracking-wide text-white/60 italic">
             {t("bloemen.paperHint", locale)}
           </p>
         )}
@@ -149,21 +128,15 @@ export default function PaperArea({
               prefersReduced ? { duration: 0.01 } : { duration: 0.3 }
             }
           >
-            <p className="text-xs tracking-wider text-foreground/40 uppercase">
+            <p className="text-xs tracking-wider text-white/70 uppercase">
               {placedFlowers.length}{" "}
-              {placedFlowers.length === 1
-                ? locale === "nl"
-                  ? "bloem"
-                  : "flower"
-                : locale === "nl"
-                  ? "bloemen"
-                  : "flowers"}
+              {placedFlowers.length === 1 ? "flower" : "flowers"}
             </p>
 
             {!bouquetMade && (
               <button
                 type="button"
-                className="rounded bg-accent/10 px-3 py-1 text-xs tracking-[0.1em] text-accent uppercase transition-colors hover:bg-accent/20 focus-visible:outline-2 focus-visible:outline-accent"
+                className="rounded bg-white/20 px-3 py-1 text-xs tracking-[0.1em] text-white uppercase transition-colors hover:bg-white/30 focus-visible:outline-2 focus-visible:outline-white"
                 onClick={(e) => {
                   e.stopPropagation();
                   onMakeBouquet();
@@ -176,7 +149,7 @@ export default function PaperArea({
 
             <button
               type="button"
-              className="text-xs tracking-[0.1em] text-accent/60 uppercase transition-colors hover:text-accent focus-visible:outline-2 focus-visible:outline-accent"
+              className="text-xs tracking-[0.1em] text-white/50 uppercase transition-colors hover:text-white focus-visible:outline-2 focus-visible:outline-white"
               onClick={(e) => {
                 e.stopPropagation();
                 onReset();
@@ -191,7 +164,7 @@ export default function PaperArea({
         {/* Completion message */}
         {bouquetMade && (
           <motion.p
-            className="absolute right-0 bottom-8 left-0 z-20 text-center font-serif text-base text-accent"
+            className="absolute right-0 bottom-8 left-0 z-20 text-center font-serif text-base text-white"
             initial={prefersReduced ? false : { opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={
@@ -212,9 +185,7 @@ export default function PaperArea({
             const last = placedFlowers[placedFlowers.length - 1];
             const lastFlower = FLOWERS.find((f) => f.id === last?.id);
             if (!lastFlower) return null;
-            return locale === "nl"
-              ? `${lastFlower.name.nl} toegevoegd`
-              : `${lastFlower.name.en} added`;
+            return `${lastFlower.name.en} added`;
           })()}
       </div>
     </div>
