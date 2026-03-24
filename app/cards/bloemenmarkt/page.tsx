@@ -42,9 +42,9 @@ export default function BloemenmarktPage() {
             >
               &larr; All Cards
             </Link>
-            <h1 className="font-serif text-4xl md:text-5xl">Bloemenmarkt</h1>
+            <h1 className="font-serif text-4xl md:text-5xl">Flower Market</h1>
             <p className="mt-3 text-lg text-foreground/60">
-              Tap the card to open it...
+              Tap the card to open it&hellip;
             </p>
           </motion.div>
         )}

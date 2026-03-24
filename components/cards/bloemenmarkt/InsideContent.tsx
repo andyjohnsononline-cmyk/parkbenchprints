@@ -26,7 +26,7 @@ interface PaperRect {
 
 export default function InsideContent({
   isOpen,
-  locale = "nl",
+  locale = "en",
 }: InsideContentProps) {
   const prefersReduced = useReducedMotion();
   const [placedFlowers, setPlacedFlowers] = useState<PlacedFlower[]>([]);

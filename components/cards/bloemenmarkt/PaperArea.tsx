@@ -25,7 +25,7 @@ export default function PaperArea({
   bouquetMade,
   onMakeBouquet,
   onReset,
-  locale = "nl",
+  locale = "en",
 }: PaperAreaProps) {
   const prefersReduced = useReducedMotion();
   const isEmpty = placedFlowers.length === 0;
