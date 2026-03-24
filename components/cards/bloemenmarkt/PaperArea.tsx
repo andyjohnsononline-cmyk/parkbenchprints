@@ -1,18 +1,16 @@
 "use client";
 
-import { forwardRef } from "react";
 import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
 import { FLOWERS } from "./flowers";
-import BouquetOpenSVG from "./flowers/BouquetOpenSVG";
-import BouquetClosedSVG from "./flowers/BouquetClosedSVG";
 import type { Locale } from "@/lib/i18n";
 import { t } from "@/lib/i18n";
 
 export interface PlacedFlower {
-  id: string;       // flower type id
+  id: string;       // flower type id (matches bucket group ID)
   instanceId: string; // unique key for this placement
-  x: number;        // percentage of drop zone width (0-100)
-  y: number;        // percentage of drop zone height (0-100)
+  x: number;        // arrangement x position (percentage)
+  y: number;        // arrangement y position (percentage)
+  rotate: number;   // slight rotation for natural feel
 }
 
 interface PaperAreaProps {
@@ -23,153 +21,150 @@ interface PaperAreaProps {
   locale?: Locale;
 }
 
-const PaperArea = forwardRef<HTMLDivElement, PaperAreaProps>(
-  function PaperArea(
-    { placedFlowers, bouquetMade, onMakeBouquet, onReset, locale = "nl" },
-    ref,
-  ) {
-    const prefersReduced = useReducedMotion();
-    const isEmpty = placedFlowers.length === 0;
+// Fan positions: flowers fan outward from center, stems down, blooms up
+// X = horizontal spread, Y = anchored near bottom so blooms overflow top
+const FAN_POSITIONS = [
+  { x: 50, y: 88, rotate: 0 },    // center
+  { x: 38, y: 86, rotate: -12 },   // left
+  { x: 62, y: 86, rotate: 10 },    // right
+  { x: 28, y: 84, rotate: -18 },   // far left
+  { x: 72, y: 84, rotate: 16 },    // far right
+  { x: 45, y: 87, rotate: -6 },    // inner left
+  { x: 55, y: 87, rotate: 5 },     // inner right
+  { x: 33, y: 85, rotate: -14 },   // mid left
+  { x: 67, y: 85, rotate: 12 },    // mid right
+];
 
-    return (
-      <div
-        ref={ref}
-        role="region"
-        aria-label={locale === "nl" ? "Jouw boeket" : "Your bouquet"}
-        className="relative"
-        style={{ width: "100%", minHeight: 160 }}
-      >
-        {/* Bouquet wrapper as drop zone */}
-        <div
-          className="relative mx-auto flex items-center justify-center"
-          style={{ width: "85%", height: 140 }}
-        >
-          {/* Open bouquet paper (drop target) */}
-          <AnimatePresence mode="wait">
-            {!bouquetMade ? (
+// Tighter positions for bouquet (paper wrapped)
+const BOUQUET_POSITIONS = [
+  { x: 50, y: 90, rotate: 0 },
+  { x: 42, y: 88, rotate: -8 },
+  { x: 58, y: 88, rotate: 7 },
+  { x: 36, y: 87, rotate: -12 },
+  { x: 64, y: 87, rotate: 10 },
+  { x: 46, y: 89, rotate: -4 },
+  { x: 54, y: 89, rotate: 3 },
+  { x: 40, y: 88, rotate: -9 },
+  { x: 60, y: 88, rotate: 8 },
+];
+
+export default function PaperArea({
+  placedFlowers,
+  bouquetMade,
+  onMakeBouquet,
+  onReset,
+  locale = "en",
+}: PaperAreaProps) {
+  const prefersReduced = useReducedMotion();
+  const isEmpty = placedFlowers.length === 0;
+
+  return (
+    <div
+      role="region"
+      aria-label={locale === "nl" ? "Jouw boeket" : "Your bouquet"}
+      className="pointer-events-none relative h-full w-full overflow-visible"
+    >
+      {/* Transparent overlay — the paper visual is part of the SVG scene */}
+      <div className="relative flex h-full w-full items-end justify-center overflow-visible">
+        {/* Empty state hint */}
+        {isEmpty && !bouquetMade && (
+          <p className="absolute top-1/2 left-1/2 z-10 -translate-x-1/2 -translate-y-1/2 font-serif text-sm tracking-wide text-foreground/30 italic">
+            {t("bloemen.paperHint", locale)}
+          </p>
+        )}
+
+        {/* Placed flowers — arranged in a vertical fan, stems down, blooms up */}
+        <AnimatePresence>
+        {!bouquetMade &&
+          placedFlowers.map((placed, index) => {
+            const flower = FLOWERS.find((f) => f.id === placed.id);
+            if (!flower) return null;
+            const FlowerComponent = flower.Component;
+            const pos = FAN_POSITIONS[index % FAN_POSITIONS.length];
+
+            return (
               <motion.div
-                key="open"
-                className="absolute inset-0 flex items-center justify-center"
-                initial={false}
-                exit={prefersReduced ? { opacity: 0 } : { opacity: 0, scale: 0.9 }}
-                transition={{ duration: 0.3 }}
-              >
-                <BouquetOpenSVG className={`h-full w-auto ${isEmpty ? "opacity-40" : "opacity-60"}`} />
-              </motion.div>
-            ) : (
-              <motion.div
-                key="closed"
-                className="absolute inset-0 flex items-center justify-center"
-                initial={prefersReduced ? false : { opacity: 0, scale: 0.9 }}
-                animate={{ opacity: 0.7, scale: 1 }}
+                key={placed.instanceId}
+                className="absolute origin-bottom"
+                style={{
+                  left: `${pos.x}%`,
+                  top: `${pos.y}%`,
+                  zIndex: index + 1,
+                }}
+                initial={prefersReduced ? false : { scale: 0.3, opacity: 0, rotate: 0 }}
+                animate={{
+                  scale: 1,
+                  opacity: 1,
+                  rotate: pos.rotate,
+                  x: "-50%",
+                  y: "-100%",
+                }}
+                exit={prefersReduced ? { opacity: 0 } : { scale: 0.3, opacity: 0 }}
                 transition={
                   prefersReduced
                     ? { duration: 0.01 }
-                    : { type: "spring", stiffness: 80, damping: 12 }
+                    : { type: "spring", stiffness: 120, damping: 12, mass: 0.8 }
                 }
               >
-                <BouquetClosedSVG className="h-full w-auto" />
+                <FlowerComponent className="h-52 w-auto" />
               </motion.div>
-            )}
-          </AnimatePresence>
+            );
+          })}
+        </AnimatePresence>
 
-          {/* Empty state hint */}
-          {isEmpty && !bouquetMade && (
-            <p className="relative z-10 text-[10px] tracking-wider text-foreground/25 uppercase">
-              {t("bloemen.paperHint", locale)}
-            </p>
-          )}
+        {/* Flowers gathered in bouquet — tighter fan */}
+        {bouquetMade &&
+          placedFlowers.map((placed, index) => {
+            const flower = FLOWERS.find((f) => f.id === placed.id);
+            if (!flower) return null;
+            const FlowerComponent = flower.Component;
+            const pos = BOUQUET_POSITIONS[index % BOUQUET_POSITIONS.length];
 
-          {/* Placed flowers at free positions */}
-          {!bouquetMade &&
-            placedFlowers.map((placed, index) => {
-              const flower = FLOWERS.find((f) => f.id === placed.id);
-              if (!flower) return null;
-              const FlowerComponent = flower.Component;
+            return (
+              <motion.div
+                key={placed.instanceId}
+                className="absolute origin-bottom"
+                style={{
+                  left: `${pos.x}%`,
+                  top: `${pos.y}%`,
+                  zIndex: index + 1,
+                }}
+                initial={prefersReduced ? false : { rotate: placed.rotate }}
+                animate={{
+                  rotate: pos.rotate,
+                  x: "-50%",
+                  y: "-100%",
+                }}
+                transition={
+                  prefersReduced
+                    ? { duration: 0.01 }
+                    : { type: "spring", stiffness: 80, damping: 12, delay: index * 0.05 }
+                }
+              >
+                <FlowerComponent className="h-52 w-auto" />
+              </motion.div>
+            );
+          })}
 
-              return (
-                <motion.div
-                  key={placed.instanceId}
-                  className="absolute"
-                  style={{
-                    left: `${placed.x}%`,
-                    top: `${placed.y}%`,
-                    transform: "translate(-50%, -50%)",
-                    zIndex: index + 1,
-                  }}
-                  initial={prefersReduced ? false : { scale: 0.5, opacity: 0 }}
-                  animate={{ scale: 1, opacity: 1 }}
-                  transition={
-                    prefersReduced
-                      ? { duration: 0.01 }
-                      : { type: "spring", stiffness: 120, damping: 10, mass: 0.8 }
-                  }
-                >
-                  <FlowerComponent className="h-auto w-8" />
-                </motion.div>
-              );
-            })}
-
-          {/* Flowers gathered inside closed bouquet */}
-          {bouquetMade &&
-            placedFlowers.map((placed, index) => {
-              const flower = FLOWERS.find((f) => f.id === placed.id);
-              if (!flower) return null;
-              const FlowerComponent = flower.Component;
-              // Stack flowers near center with slight offset
-              const total = placedFlowers.length;
-              const spreadX = total === 1 ? 50 : 35 + (index / (total - 1)) * 30;
-              const spreadY = 20 + (index % 3) * 10;
-
-              return (
-                <motion.div
-                  key={placed.instanceId}
-                  className="absolute"
-                  style={{
-                    left: `${spreadX}%`,
-                    top: `${spreadY}%`,
-                    transform: "translate(-50%, -50%)",
-                    zIndex: index + 1,
-                  }}
-                  initial={prefersReduced ? false : { x: 0, y: 0 }}
-                  animate={{ x: 0, y: 0 }}
-                  transition={
-                    prefersReduced
-                      ? { duration: 0.01 }
-                      : { type: "spring", stiffness: 80, damping: 12, delay: index * 0.05 }
-                  }
-                >
-                  <FlowerComponent className="h-auto w-8" />
-                </motion.div>
-              );
-            })}
-        </div>
-
-        {/* Controls below bouquet */}
+        {/* Controls positioned below the paper area so they don't cover art */}
         {!isEmpty && (
           <motion.div
-            className="mt-2 flex items-center justify-center gap-3"
+            className="pointer-events-auto absolute -bottom-8 right-0 left-0 z-20 flex items-center justify-center gap-3"
             initial={prefersReduced ? false : { opacity: 0, y: 5 }}
             animate={{ opacity: 1, y: 0 }}
             transition={
               prefersReduced ? { duration: 0.01 } : { duration: 0.3 }
             }
           >
-            <p className="text-[10px] tracking-wider text-foreground/40 uppercase">
+            <p className="text-xs tracking-wider text-foreground/50 uppercase">
               {placedFlowers.length}{" "}
-              {placedFlowers.length === 1
-                ? locale === "nl"
-                  ? "bloem"
-                  : "flower"
-                : locale === "nl"
-                  ? "bloemen"
-                  : "flowers"}
+              {placedFlowers.length === 1 ? "flower" : "flowers"}
             </p>
 
             {!bouquetMade && (
               <button
                 type="button"
-                className="rounded bg-accent/10 px-3 py-1 text-[10px] tracking-wider text-accent uppercase transition-colors hover:bg-accent/20 focus-visible:outline-2 focus-visible:outline-accent"
+                className="rounded bg-accent/10 px-3 py-1 text-xs tracking-[0.1em] text-accent uppercase transition-colors hover:bg-accent/20 focus-visible:outline-2 focus-visible:outline-accent"
                 onClick={(e) => {
                   e.stopPropagation();
                   onMakeBouquet();
@@ -182,7 +177,7 @@ const PaperArea = forwardRef<HTMLDivElement, PaperAreaProps>(
 
             <button
               type="button"
-              className="text-[10px] tracking-wider text-accent/60 uppercase transition-colors hover:text-accent focus-visible:outline-2 focus-visible:outline-accent"
+              className="text-xs tracking-[0.1em] text-accent/60 uppercase transition-colors hover:text-accent focus-visible:outline-2 focus-visible:outline-accent"
               onClick={(e) => {
                 e.stopPropagation();
                 onReset();
@@ -197,7 +192,7 @@ const PaperArea = forwardRef<HTMLDivElement, PaperAreaProps>(
         {/* Completion message */}
         {bouquetMade && (
           <motion.p
-            className="mt-1 text-center font-serif text-sm text-accent md:text-base"
+            className="absolute -bottom-16 right-0 left-0 z-20 text-center font-serif text-base text-accent"
             initial={prefersReduced ? false : { opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={
@@ -209,22 +204,18 @@ const PaperArea = forwardRef<HTMLDivElement, PaperAreaProps>(
             {t("bloemen.complete", locale)}
           </motion.p>
         )}
-
-        {/* Live region for screen reader */}
-        <div aria-live="polite" className="sr-only">
-          {placedFlowers.length > 0 &&
-            (() => {
-              const last = placedFlowers[placedFlowers.length - 1];
-              const lastFlower = FLOWERS.find((f) => f.id === last?.id);
-              if (!lastFlower) return null;
-              return locale === "nl"
-                ? `${lastFlower.name.nl} toegevoegd`
-                : `${lastFlower.name.en} added`;
-            })()}
-        </div>
       </div>
-    );
-  },
-);
 
-export default PaperArea;
+      {/* Live region for screen reader */}
+      <div aria-live="polite" className="sr-only">
+        {placedFlowers.length > 0 &&
+          (() => {
+            const last = placedFlowers[placedFlowers.length - 1];
+            const lastFlower = FLOWERS.find((f) => f.id === last?.id);
+            if (!lastFlower) return null;
+            return `${lastFlower.name.en} added`;
+          })()}
+      </div>
+    </div>
+  );
+}

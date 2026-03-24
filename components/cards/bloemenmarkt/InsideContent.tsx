@@ -1,9 +1,8 @@
 "use client";
 
-import { useCallback, useRef, useState } from "react";
-import { motion, useReducedMotion } from "framer-motion";
-import { FLOWERS } from "./flowers";
-import FlowerBucket from "./FlowerBucket";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
+import { FLOWERS, BUCKET_IDS } from "./flowers";
 import PaperArea, { type PlacedFlower } from "./PaperArea";
 import { type Locale, t } from "@/lib/i18n";
 
@@ -12,19 +11,68 @@ interface InsideContentProps {
   locale?: Locale;
 }
 
+interface HeldFlower {
+  id: string;
+  x: number;
+  y: number;
+}
+
+// Minimum pixels the pointer must move to count as a drag (vs a click).
+// Generous threshold to prevent touch jitter from triggering a drag.
+const DRAG_THRESHOLD = 16;
+
 export default function InsideContent({
   isOpen,
-  locale = "nl",
+  locale = "en",
 }: InsideContentProps) {
   const prefersReduced = useReducedMotion();
   const [placedFlowers, setPlacedFlowers] = useState<PlacedFlower[]>([]);
   const [bouquetMade, setBouquetMade] = useState(false);
+  const [heldFlower, setHeldFlower] = useState<HeldFlower | null>(null);
+  const heldFlowerRef = useRef<HeldFlower | null>(null);
+  // "holding" = pointer is down and dragging; "floating" = clicked once, follows cursor freely
+  const modeRef = useRef<"idle" | "holding" | "floating">("idle");
+  const startPosRef = useRef<{ x: number; y: number }>({ x: 0, y: 0 });
+  const hasMovedRef = useRef(false);
+  const [rawSvg, setRawSvg] = useState<string>("");
+  const svgContainerRef = useRef<HTMLDivElement>(null);
   const paperRef = useRef<HTMLDivElement>(null);
 
-  const handlePick = useCallback((flowerId: string, x: number, y: number) => {
+  // Fetch the SVG content on mount
+  useEffect(() => {
+    const basePath = process.env.NEXT_PUBLIC_BASE_PATH || "";
+    fetch(`${basePath}/market-scene-v3.svg`)
+      .then((res) => res.text())
+      .then((text) => {
+        const patched = text.replace(
+          "<svg ",
+          '<svg preserveAspectRatio="xMidYMid slice" '
+        );
+        setRawSvg(patched);
+      })
+      .catch(() => {});
+  }, []);
+
+  // Inject a11y attributes into bucket groups
+  const svgContent = rawSvg
+    ? FLOWERS.reduce((svg, flower) => {
+        const tabindex = isOpen ? "0" : "-1";
+        const label =
+          locale === "nl"
+            ? `Pak ${flower.name.nl}`
+            : `Pick ${flower.name.en}`;
+        return svg.replace(
+          new RegExp(`(<g[^>]*\\bid="${flower.id}")`),
+          `$1 role="button" tabindex="${tabindex}" aria-label="${label}" style="cursor:pointer"`
+        );
+      }, rawSvg)
+    : "";
+
+  const handlePick = useCallback((flowerId: string) => {
     setPlacedFlowers((prev) => {
       const instanceId = `${flowerId}-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
-      return [...prev, { id: flowerId, instanceId, x, y }];
+      // Position is determined by PaperArea's FAN_POSITIONS based on index
+      return [...prev, { id: flowerId, instanceId, x: 0, y: 0, rotate: 0 }];
     });
   }, []);
 
@@ -37,24 +85,164 @@ export default function InsideContent({
     setBouquetMade(false);
   }, []);
 
+  // Try to place flower if pointer is over the paper area. Returns true if placed.
+  const tryPlace = useCallback(
+    (x: number, y: number): boolean => {
+      const current = heldFlowerRef.current;
+      if (!current || !paperRef.current) return false;
+      const paperRect = paperRef.current.getBoundingClientRect();
+      if (
+        x >= paperRect.left &&
+        x <= paperRect.right &&
+        y >= paperRect.top &&
+        y <= paperRect.bottom
+      ) {
+        handlePick(current.id);
+        return true;
+      }
+      return false;
+    },
+    [handlePick]
+  );
+
+  const dismiss = useCallback(() => {
+    heldFlowerRef.current = null;
+    modeRef.current = "idle";
+    setHeldFlower(null);
+  }, []);
+
+  // --- Pointer interaction: supports both click-to-pick and drag-to-place ---
+
+  const handleSvgPointerDown = useCallback(
+    (e: React.PointerEvent) => {
+      if (!isOpen) return;
+
+      // If already floating a flower, try to place it or dismiss
+      if (modeRef.current === "floating" && heldFlowerRef.current) {
+        tryPlace(e.clientX, e.clientY);
+        dismiss();
+        return;
+      }
+
+      const target = e.target as Element;
+      for (const bucketId of BUCKET_IDS) {
+        const bucketEl = target.closest(`#${bucketId}`);
+        if (bucketEl) {
+          e.preventDefault();
+          e.stopPropagation();
+          const held: HeldFlower = {
+            id: bucketId,
+            x: e.clientX,
+            y: e.clientY,
+          };
+          heldFlowerRef.current = held;
+          modeRef.current = "holding";
+          startPosRef.current = { x: e.clientX, y: e.clientY };
+          hasMovedRef.current = false;
+          setHeldFlower(held);
+          return;
+        }
+      }
+
+      // Clicked on non-bucket area while no flower is held — do nothing
+    },
+    [isOpen, tryPlace, dismiss]
+  );
+
+  // Global pointer tracking
+  useEffect(() => {
+    const handleMove = (e: PointerEvent) => {
+      if (!heldFlowerRef.current) return;
+      if (modeRef.current === "idle") return;
+
+      // Check if we've moved past the drag threshold
+      if (!hasMovedRef.current) {
+        const dx = e.clientX - startPosRef.current.x;
+        const dy = e.clientY - startPosRef.current.y;
+        if (Math.sqrt(dx * dx + dy * dy) > DRAG_THRESHOLD) {
+          hasMovedRef.current = true;
+        }
+      }
+
+      const updated = { ...heldFlowerRef.current, x: e.clientX, y: e.clientY };
+      heldFlowerRef.current = updated;
+      setHeldFlower(updated);
+    };
+
+    const handleUp = (e: PointerEvent) => {
+      if (!heldFlowerRef.current) return;
+      if (modeRef.current !== "holding") return;
+
+      if (hasMovedRef.current) {
+        // User dragged: place if on paper, otherwise keep floating
+        const placed = tryPlace(e.clientX, e.clientY);
+        if (placed) {
+          dismiss();
+        } else {
+          // Drag ended outside paper — don't dismiss, let user keep placing
+          modeRef.current = "floating";
+        }
+      } else {
+        // User clicked (no significant movement): switch to floating mode
+        // Flower stays visible and follows cursor until next click
+        modeRef.current = "floating";
+      }
+    };
+
+    window.addEventListener("pointermove", handleMove);
+    window.addEventListener("pointerup", handleUp);
+    return () => {
+      window.removeEventListener("pointermove", handleMove);
+      window.removeEventListener("pointerup", handleUp);
+    };
+  }, [tryPlace, dismiss]);
+
+  // Auto-dismiss after timeout (safety net)
+  useEffect(() => {
+    if (!heldFlower) return;
+    const timer = setTimeout(() => {
+      dismiss();
+    }, 15000);
+    return () => clearTimeout(timer);
+  }, [heldFlower, dismiss]);
+
+  // Keyboard support on bucket groups (direct place for a11y)
+  const handleSvgKeyDown = useCallback(
+    (e: React.KeyboardEvent) => {
+      if (!isOpen) return;
+      if (e.key !== "Enter" && e.key !== " ") return;
+      const target = e.target as Element;
+      const id = target.id;
+      if (BUCKET_IDS.includes(id)) {
+        e.preventDefault();
+        e.stopPropagation();
+        handlePick(id);
+      }
+    },
+    [isOpen, handlePick]
+  );
+
+  // Resolve the flower component for the held flower
+  const heldFlowerInfo = heldFlower
+    ? FLOWERS.find((f) => f.id === heldFlower.id)
+    : null;
+
   return (
     <div className="relative flex h-full flex-col bg-[#FFF8F0]">
-      {/* Market scene background — top portion */}
+      {/* Full SVG scene — includes market stall and paper area */}
       <div className="relative flex-1" style={{ minHeight: 0 }}>
-        {/* Scene SVG as background image */}
         <div
-          className="absolute inset-0 overflow-hidden"
-          style={{
-            backgroundImage: `url(${process.env.NEXT_PUBLIC_BASE_PATH || ""}/market-scene.svg)`,
-            backgroundSize: "cover",
-            backgroundPosition: "center 60%",
-            backgroundRepeat: "no-repeat",
-          }}
+          ref={svgContainerRef}
+          className="market-svg-container absolute inset-0 overflow-hidden"
+          data-hint={isOpen && placedFlowers.length === 0 ? "true" : undefined}
+          onPointerDown={handleSvgPointerDown}
+          onKeyDown={handleSvgKeyDown}
+          dangerouslySetInnerHTML={svgContent ? { __html: svgContent } : undefined}
         />
 
         {/* Drag hint overlay */}
         <motion.p
-          className="relative z-10 pt-2 text-center text-[10px] tracking-wider text-white/70 uppercase drop-shadow-sm"
+          className="pointer-events-none relative z-10 pt-2 text-center text-xs tracking-wider text-white/70 uppercase drop-shadow-sm"
           animate={{
             opacity:
               isOpen && placedFlowers.length === 0
@@ -72,38 +260,46 @@ export default function InsideContent({
           {t("bloemen.dragHint", locale)}
         </motion.p>
 
-        {/* Flower buckets overlaid on the scene */}
-        <div className="relative z-10 flex h-full items-end justify-center px-2 pb-2">
-          <div className="flex flex-wrap items-end justify-center gap-x-1 gap-y-1">
-            {FLOWERS.map((flower, index) => (
-              <FlowerBucket
-                key={flower.id}
-                flower={flower}
-                index={index}
-                isOpen={isOpen}
-                onPick={handlePick}
-                paperRef={paperRef}
-                locale={locale}
-              />
-            ))}
-          </div>
+        {/* Bouquet overlay — positioned over the market paper in the SVG scene */}
+        <div
+          ref={paperRef}
+          className="pointer-events-none absolute z-10 overflow-visible"
+          style={{ left: "70%", top: "0%", width: "30%", height: "58%" }}
+        >
+          <PaperArea
+            placedFlowers={placedFlowers}
+            bouquetMade={bouquetMade}
+            onMakeBouquet={handleMakeBouquet}
+            onReset={handleReset}
+            locale={locale}
+          />
         </div>
       </div>
 
-      {/* Divider */}
-      <div className="mx-auto h-px w-16 bg-accent/20" />
-
-      {/* Paper area — drop zone at bottom */}
-      <div className="px-3 pb-3 pt-1">
-        <PaperArea
-          ref={paperRef}
-          placedFlowers={placedFlowers}
-          bouquetMade={bouquetMade}
-          onMakeBouquet={handleMakeBouquet}
-          onReset={handleReset}
-          locale={locale}
-        />
-      </div>
+      {/* Held flower — follows pointer */}
+      <AnimatePresence>
+        {heldFlower && heldFlowerInfo && (
+          <motion.div
+            key={`held-${heldFlower.id}`}
+            className="pointer-events-none fixed z-50"
+            style={{
+              left: heldFlower.x,
+              top: heldFlower.y,
+              transform: "translate(-50%, -50%)",
+            }}
+            initial={prefersReduced ? false : { scale: 0.3, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            exit={prefersReduced ? { opacity: 0 } : { scale: 0.5, opacity: 0, transition: { duration: 0.15 } }}
+            transition={
+              prefersReduced
+                ? { duration: 0.01 }
+                : { type: "spring", stiffness: 400, damping: 25 }
+            }
+          >
+            <heldFlowerInfo.Component className="h-36 w-auto drop-shadow-lg" />
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

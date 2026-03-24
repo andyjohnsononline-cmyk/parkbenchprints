@@ -13,7 +13,7 @@ const paperTexture =
 /**
  * Left half of the gatefold cover.
  */
-export function FrontLeft({ locale = "nl" }: FrontCoverProps) {
+export function FrontLeft({ locale = "en" }: FrontCoverProps) {
   return (
     <div className="relative flex h-full flex-col bg-gradient-to-br from-[#FFF8F0] to-[#F5EDE3]">
       <div
@@ -28,7 +28,7 @@ export function FrontLeft({ locale = "nl" }: FrontCoverProps) {
           Park Bench
         </p>
         <p className="font-serif text-2xl leading-tight text-accent md:text-3xl">
-          Bloemen
+          Flower
         </p>
       </div>
       <div className="flex-1" />
@@ -39,7 +39,7 @@ export function FrontLeft({ locale = "nl" }: FrontCoverProps) {
 /**
  * Right half of the gatefold cover.
  */
-export function FrontRight({ locale = "nl" }: FrontCoverProps) {
+export function FrontRight({ locale = "en" }: FrontCoverProps) {
   const prefersReduced = useReducedMotion();
 
   return (
@@ -56,24 +56,22 @@ export function FrontRight({ locale = "nl" }: FrontCoverProps) {
           Prints
         </p>
         <p className="font-serif text-2xl leading-tight text-accent md:text-3xl">
-          markt
+          Market
         </p>
       </div>
       <div className="flex-1" />
-      {/* Tap hint at bottom */}
-      <div className="px-4 pb-4">
-        <motion.p
-          className="text-center text-[10px] tracking-wider text-foreground/30 uppercase"
-          animate={prefersReduced ? { opacity: 0.5 } : { opacity: [0.3, 0.7, 0.3] }}
-          transition={prefersReduced ? {} : { duration: 2, repeat: Infinity, ease: "easeInOut" }}
-        >
-          {t("share.tapToOpen", locale)}
-        </motion.p>
-      </div>
+      {/* Tap hint at bottom — absolutely positioned to not shift title alignment */}
+      <motion.p
+        className="absolute right-0 bottom-4 left-0 text-center text-[10px] tracking-wider text-foreground/30 uppercase"
+        animate={prefersReduced ? { opacity: 0.5 } : { opacity: [0.3, 0.7, 0.3] }}
+        transition={prefersReduced ? {} : { duration: 2, repeat: Infinity, ease: "easeInOut" }}
+      >
+        {t("share.tapToOpen", locale)}
+      </motion.p>
     </div>
   );
 }
 
-export default function FrontCover({ locale = "nl" }: FrontCoverProps) {
+export default function FrontCover({ locale = "en" }: FrontCoverProps) {
   return <FrontLeft locale={locale} />;
 }

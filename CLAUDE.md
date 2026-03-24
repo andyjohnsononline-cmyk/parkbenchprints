@@ -15,5 +15,5 @@ In QA mode, flag any code that doesn't match DESIGN.md.
 ## Key Patterns
 - React Compiler strict lint: use `useSyncExternalStore` for browser APIs, lazy `useState` initializers instead of `useEffect` + `setState`
 - All animations must respect `useReducedMotion` from Framer Motion
-- i18n: NL (default) + EN via `t(key, locale)` from `/lib/i18n.ts`
+- i18n: EN (default) + NL via `t(key, locale)` from `/lib/i18n.ts`
 - Card interactions use spring physics — stiffness/damping values are specified in DESIGN.md

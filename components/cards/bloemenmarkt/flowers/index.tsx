@@ -1,10 +1,7 @@
-import CoralSnapdragon from './CoralSnapdragon';
-import Daffodil from './Daffodil';
-import OrangeSnapdragon from './OrangeSnapdragon';
-import Peony from './Peony';
+import BlueHydrangea from './BlueHydrangea';
 import PinkPeony from './PinkPeony';
 import PinkSnapdragon from './PinkSnapdragon';
-import PurpleTulip from './PurpleTulip';
+import RedTulip from './RedTulip';
 import YellowSnapdragon from './YellowSnapdragon';
 import YellowTulip from './YellowTulip';
 
@@ -14,14 +11,15 @@ export interface FlowerInfo {
   Component: React.ComponentType<{ className?: string }>;
 }
 
+// Bucket group IDs from the designer's SVG → single flower components
 export const FLOWERS: FlowerInfo[] = [
-  { id: 'coral-snapdragon', name: { nl: 'Koraal leeuwenbek', en: 'Coral Snapdragon' }, Component: CoralSnapdragon },
-  { id: 'daffodil', name: { nl: 'Narcis', en: 'Daffodil' }, Component: Daffodil },
-  { id: 'orange-snapdragon', name: { nl: 'Oranje leeuwenbek', en: 'Orange Snapdragon' }, Component: OrangeSnapdragon },
-  { id: 'peony', name: { nl: 'Pioenroos', en: 'Peony' }, Component: Peony },
-  { id: 'pink-peony', name: { nl: 'Roze pioenroos', en: 'Pink Peony' }, Component: PinkPeony },
-  { id: 'pink-snapdragon', name: { nl: 'Roze leeuwenbek', en: 'Pink Snapdragon' }, Component: PinkSnapdragon },
-  { id: 'purple-tulip', name: { nl: 'Paarse tulp', en: 'Purple Tulip' }, Component: PurpleTulip },
-  { id: 'yellow-snapdragon', name: { nl: 'Gele leeuwenbek', en: 'Yellow Snapdragon' }, Component: YellowSnapdragon },
-  { id: 'yellow-tulip', name: { nl: 'Gele tulp', en: 'Yellow Tulip' }, Component: YellowTulip },
+  { id: 'red-tulips-bucket', name: { nl: 'Rode tulpen', en: 'Red Tulips' }, Component: RedTulip },
+  { id: 'pink-snapdragon-bucket', name: { nl: 'Roze leeuwenbek', en: 'Pink Snapdragon' }, Component: PinkSnapdragon },
+  { id: 'blue-hydrangea-bucket', name: { nl: 'Blauwe hortensia', en: 'Blue Hydrangea' }, Component: BlueHydrangea },
+  { id: 'yellow-tulips-bucket', name: { nl: 'Gele tulpen', en: 'Yellow Tulips' }, Component: YellowTulip },
+  { id: 'yellow-snapdragon-bucket', name: { nl: 'Gele leeuwenbek', en: 'Yellow Snapdragon' }, Component: YellowSnapdragon },
+  { id: 'peony-bucket', name: { nl: 'Pioenrozen', en: 'Peonies' }, Component: PinkPeony },
 ];
+
+// All known bucket IDs in the SVG — used for event delegation
+export const BUCKET_IDS = FLOWERS.map((f) => f.id);
