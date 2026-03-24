@@ -55,32 +55,32 @@ body {
 }
 
 /* Flower market bucket interactivity */
-#red-tulips,
-#orange-snapdragon,
-#blue-hydrangea,
-#yellow-tulips,
-#yellow-snapdragons,
-#peonies {
+#red-tulips-bucket,
+#pink-snapdragon-bucket,
+#blue-hydrangea-bucket,
+#yellow-tulips-bucket,
+#yellow-snapdragon-bucket,
+#peony-bucket {
   cursor: pointer;
   transition: filter 0.2s ease, opacity 0.2s ease;
   filter: drop-shadow(0 0 0 transparent);
 }
 
-#red-tulips:hover,
-#orange-snapdragon:hover,
-#blue-hydrangea:hover,
-#yellow-tulips:hover,
-#yellow-snapdragons:hover,
-#peonies:hover {
+#red-tulips-bucket:hover,
+#pink-snapdragon-bucket:hover,
+#blue-hydrangea-bucket:hover,
+#yellow-tulips-bucket:hover,
+#yellow-snapdragon-bucket:hover,
+#peony-bucket:hover {
   filter: brightness(1.12) drop-shadow(0 1px 3px rgba(139, 115, 85, 0.3));
 }
 
-#red-tulips:focus-visible,
-#orange-snapdragon:focus-visible,
-#blue-hydrangea:focus-visible,
-#yellow-tulips:focus-visible,
-#yellow-snapdragons:focus-visible,
-#peonies:focus-visible {
+#red-tulips-bucket:focus-visible,
+#pink-snapdragon-bucket:focus-visible,
+#blue-hydrangea-bucket:focus-visible,
+#yellow-tulips-bucket:focus-visible,
+#yellow-snapdragon-bucket:focus-visible,
+#peony-bucket:focus-visible {
   outline: 2px solid var(--accent);
   outline-offset: 2px;
 }
@@ -91,29 +91,29 @@ body {
   50% { filter: brightness(1.06); }
 }
 
-.market-svg-container[data-hint="true"] #red-tulips,
-.market-svg-container[data-hint="true"] #orange-snapdragon,
-.market-svg-container[data-hint="true"] #blue-hydrangea,
-.market-svg-container[data-hint="true"] #yellow-tulips,
-.market-svg-container[data-hint="true"] #yellow-snapdragons,
-.market-svg-container[data-hint="true"] #peonies {
+.market-svg-container[data-hint="true"] #red-tulips-bucket,
+.market-svg-container[data-hint="true"] #pink-snapdragon-bucket,
+.market-svg-container[data-hint="true"] #blue-hydrangea-bucket,
+.market-svg-container[data-hint="true"] #yellow-tulips-bucket,
+.market-svg-container[data-hint="true"] #yellow-snapdragon-bucket,
+.market-svg-container[data-hint="true"] #peony-bucket {
   animation: bucket-shimmer 2.5s ease-in-out infinite;
 }
 
 /* Stagger the shimmer per bucket */
-.market-svg-container[data-hint="true"] #orange-snapdragon { animation-delay: 0.3s; }
-.market-svg-container[data-hint="true"] #blue-hydrangea { animation-delay: 0.6s; }
-.market-svg-container[data-hint="true"] #yellow-tulips { animation-delay: 0.9s; }
-.market-svg-container[data-hint="true"] #yellow-snapdragons { animation-delay: 1.2s; }
-.market-svg-container[data-hint="true"] #peonies { animation-delay: 1.5s; }
+.market-svg-container[data-hint="true"] #pink-snapdragon-bucket { animation-delay: 0.3s; }
+.market-svg-container[data-hint="true"] #blue-hydrangea-bucket { animation-delay: 0.6s; }
+.market-svg-container[data-hint="true"] #yellow-tulips-bucket { animation-delay: 0.9s; }
+.market-svg-container[data-hint="true"] #yellow-snapdragon-bucket { animation-delay: 1.2s; }
+.market-svg-container[data-hint="true"] #peony-bucket { animation-delay: 1.5s; }
 
 @media (prefers-reduced-motion: reduce) {
-  .market-svg-container[data-hint="true"] #red-tulips,
-  .market-svg-container[data-hint="true"] #orange-snapdragon,
-  .market-svg-container[data-hint="true"] #blue-hydrangea,
-  .market-svg-container[data-hint="true"] #yellow-tulips,
-  .market-svg-container[data-hint="true"] #yellow-snapdragons,
-  .market-svg-container[data-hint="true"] #peonies {
+  .market-svg-container[data-hint="true"] #red-tulips-bucket,
+  .market-svg-container[data-hint="true"] #pink-snapdragon-bucket,
+  .market-svg-container[data-hint="true"] #blue-hydrangea-bucket,
+  .market-svg-container[data-hint="true"] #yellow-tulips-bucket,
+  .market-svg-container[data-hint="true"] #yellow-snapdragon-bucket,
+  .market-svg-container[data-hint="true"] #peony-bucket {
     animation: none;
   }
 }

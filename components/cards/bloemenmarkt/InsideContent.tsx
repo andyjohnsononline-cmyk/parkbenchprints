@@ -68,10 +68,11 @@ export default function InsideContent({
       }, rawSvg)
     : "";
 
-  const handlePick = useCallback((flowerId: string, x: number, y: number) => {
+  const handlePick = useCallback((flowerId: string) => {
     setPlacedFlowers((prev) => {
       const instanceId = `${flowerId}-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
-      return [...prev, { id: flowerId, instanceId, x, y }];
+      // Position is determined by PaperArea's FAN_POSITIONS based on index
+      return [...prev, { id: flowerId, instanceId, x: 0, y: 0, rotate: 0 }];
     });
   }, []);
 
@@ -84,11 +85,7 @@ export default function InsideContent({
     setBouquetMade(false);
   }, []);
 
-  const handleRemoveFlower = useCallback((instanceId: string) => {
-    setPlacedFlowers((prev) => prev.filter((f) => f.instanceId !== instanceId));
-  }, []);
-
-  // Try to place flower at the given screen coordinates. Returns true if placed.
+  // Try to place flower if pointer is over the paper area. Returns true if placed.
   const tryPlace = useCallback(
     (x: number, y: number): boolean => {
       const current = heldFlowerRef.current;
@@ -100,9 +97,7 @@ export default function InsideContent({
         y >= paperRect.top &&
         y <= paperRect.bottom
       ) {
-        const pctX = ((x - paperRect.left) / paperRect.width) * 100;
-        const pctY = ((y - paperRect.top) / paperRect.height) * 100;
-        handlePick(current.id, pctX, pctY);
+        handlePick(current.id);
         return true;
       }
       return false;
@@ -221,7 +216,7 @@ export default function InsideContent({
       if (BUCKET_IDS.includes(id)) {
         e.preventDefault();
         e.stopPropagation();
-        handlePick(id, 30 + Math.random() * 40, 20 + Math.random() * 40);
+        handlePick(id);
       }
     },
     [isOpen, handlePick]
@@ -268,15 +263,14 @@ export default function InsideContent({
         {/* Bouquet overlay — positioned over the market paper in the SVG scene */}
         <div
           ref={paperRef}
-          className="pointer-events-none absolute z-10"
-          style={{ left: "74%", top: "2%", width: "24%", height: "50%" }}
+          className="pointer-events-none absolute z-10 overflow-visible"
+          style={{ left: "70%", top: "0%", width: "30%", height: "58%" }}
         >
           <PaperArea
             placedFlowers={placedFlowers}
             bouquetMade={bouquetMade}
             onMakeBouquet={handleMakeBouquet}
             onReset={handleReset}
-            onRemoveFlower={handleRemoveFlower}
             locale={locale}
           />
         </div>
@@ -291,7 +285,7 @@ export default function InsideContent({
             style={{
               left: heldFlower.x,
               top: heldFlower.y,
-              transform: "translate(-50%, -80%)",
+              transform: "translate(-50%, -50%)",
             }}
             initial={prefersReduced ? false : { scale: 0.3, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
@@ -302,7 +296,7 @@ export default function InsideContent({
                 : { type: "spring", stiffness: 400, damping: 25 }
             }
           >
-            <heldFlowerInfo.Component className="h-28 w-auto drop-shadow-lg" />
+            <heldFlowerInfo.Component className="h-36 w-auto drop-shadow-lg" />
           </motion.div>
         )}
       </AnimatePresence>

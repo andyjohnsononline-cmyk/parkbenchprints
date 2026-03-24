@@ -8,8 +8,9 @@ import { t } from "@/lib/i18n";
 export interface PlacedFlower {
   id: string;       // flower type id (matches bucket group ID)
   instanceId: string; // unique key for this placement
-  x: number;        // percentage of drop zone width (0-100)
-  y: number;        // percentage of drop zone height (0-100)
+  x: number;        // arrangement x position (percentage)
+  y: number;        // arrangement y position (percentage)
+  rotate: number;   // slight rotation for natural feel
 }
 
 interface PaperAreaProps {
@@ -17,16 +18,41 @@ interface PaperAreaProps {
   bouquetMade: boolean;
   onMakeBouquet: () => void;
   onReset: () => void;
-  onRemoveFlower?: (instanceId: string) => void;
   locale?: Locale;
 }
+
+// Fan positions: flowers fan outward from center, stems down, blooms up
+// X = horizontal spread, Y = anchored near bottom so blooms overflow top
+const FAN_POSITIONS = [
+  { x: 50, y: 88, rotate: 0 },    // center
+  { x: 38, y: 86, rotate: -12 },   // left
+  { x: 62, y: 86, rotate: 10 },    // right
+  { x: 28, y: 84, rotate: -18 },   // far left
+  { x: 72, y: 84, rotate: 16 },    // far right
+  { x: 45, y: 87, rotate: -6 },    // inner left
+  { x: 55, y: 87, rotate: 5 },     // inner right
+  { x: 33, y: 85, rotate: -14 },   // mid left
+  { x: 67, y: 85, rotate: 12 },    // mid right
+];
+
+// Tighter positions for bouquet (paper wrapped)
+const BOUQUET_POSITIONS = [
+  { x: 50, y: 90, rotate: 0 },
+  { x: 42, y: 88, rotate: -8 },
+  { x: 58, y: 88, rotate: 7 },
+  { x: 36, y: 87, rotate: -12 },
+  { x: 64, y: 87, rotate: 10 },
+  { x: 46, y: 89, rotate: -4 },
+  { x: 54, y: 89, rotate: 3 },
+  { x: 40, y: 88, rotate: -9 },
+  { x: 60, y: 88, rotate: 8 },
+];
 
 export default function PaperArea({
   placedFlowers,
   bouquetMade,
   onMakeBouquet,
   onReset,
-  onRemoveFlower,
   locale = "en",
 }: PaperAreaProps) {
   const prefersReduced = useReducedMotion();
@@ -36,85 +62,86 @@ export default function PaperArea({
     <div
       role="region"
       aria-label={locale === "nl" ? "Jouw boeket" : "Your bouquet"}
-      className="pointer-events-none relative h-full w-full"
+      className="pointer-events-none relative h-full w-full overflow-visible"
     >
-      {/* Transparent overlay — the paper visual is part of the SVG scene (cls-53) */}
-      <div className="relative flex h-full w-full items-center justify-center">
+      {/* Transparent overlay — the paper visual is part of the SVG scene */}
+      <div className="relative flex h-full w-full items-end justify-center overflow-visible">
         {/* Empty state hint */}
         {isEmpty && !bouquetMade && (
-          <p className="relative z-10 font-serif text-sm tracking-wide text-foreground/30 italic">
+          <p className="absolute top-1/2 left-1/2 z-10 -translate-x-1/2 -translate-y-1/2 font-serif text-sm tracking-wide text-foreground/30 italic">
             {t("bloemen.paperHint", locale)}
           </p>
         )}
 
-        {/* Placed flowers at free positions */}
+        {/* Placed flowers — arranged in a vertical fan, stems down, blooms up */}
         <AnimatePresence>
         {!bouquetMade &&
           placedFlowers.map((placed, index) => {
             const flower = FLOWERS.find((f) => f.id === placed.id);
             if (!flower) return null;
             const FlowerComponent = flower.Component;
+            const pos = FAN_POSITIONS[index % FAN_POSITIONS.length];
 
             return (
               <motion.div
                 key={placed.instanceId}
-                className="pointer-events-auto absolute cursor-pointer"
+                className="absolute origin-bottom"
                 style={{
-                  left: `${placed.x}%`,
-                  top: `${placed.y}%`,
-                  transform: "translate(-50%, -50%)",
+                  left: `${pos.x}%`,
+                  top: `${pos.y}%`,
                   zIndex: index + 1,
                 }}
-                initial={prefersReduced ? false : { scale: 0.5, opacity: 0 }}
-                animate={{ scale: 1, opacity: 1 }}
+                initial={prefersReduced ? false : { scale: 0.3, opacity: 0, rotate: 0 }}
+                animate={{
+                  scale: 1,
+                  opacity: 1,
+                  rotate: pos.rotate,
+                  x: "-50%",
+                  y: "-100%",
+                }}
                 exit={prefersReduced ? { opacity: 0 } : { scale: 0.3, opacity: 0 }}
                 transition={
                   prefersReduced
                     ? { duration: 0.01 }
-                    : { type: "spring", stiffness: 120, damping: 10, mass: 0.8 }
+                    : { type: "spring", stiffness: 120, damping: 12, mass: 0.8 }
                 }
-                whileHover={{ scale: 1.15 }}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onRemoveFlower?.(placed.instanceId);
-                }}
-                title={locale === "nl" ? "Klik om te verwijderen" : "Click to remove"}
               >
-                <FlowerComponent className="h-16 w-auto" />
+                <FlowerComponent className="h-52 w-auto" />
               </motion.div>
             );
           })}
         </AnimatePresence>
 
-        {/* Flowers gathered in bouquet */}
+        {/* Flowers gathered in bouquet — tighter fan */}
         {bouquetMade &&
           placedFlowers.map((placed, index) => {
             const flower = FLOWERS.find((f) => f.id === placed.id);
             if (!flower) return null;
             const FlowerComponent = flower.Component;
-            const total = placedFlowers.length;
-            const spreadX = total === 1 ? 50 : 35 + (index / (total - 1)) * 30;
-            const spreadY = 20 + (index % 3) * 10;
+            const pos = BOUQUET_POSITIONS[index % BOUQUET_POSITIONS.length];
 
             return (
               <motion.div
                 key={placed.instanceId}
-                className="absolute"
+                className="absolute origin-bottom"
                 style={{
-                  left: `${spreadX}%`,
-                  top: `${spreadY}%`,
-                  transform: "translate(-50%, -50%)",
+                  left: `${pos.x}%`,
+                  top: `${pos.y}%`,
                   zIndex: index + 1,
                 }}
-                initial={prefersReduced ? false : { x: 0, y: 0 }}
-                animate={{ x: 0, y: 0 }}
+                initial={prefersReduced ? false : { rotate: placed.rotate }}
+                animate={{
+                  rotate: pos.rotate,
+                  x: "-50%",
+                  y: "-100%",
+                }}
                 transition={
                   prefersReduced
                     ? { duration: 0.01 }
                     : { type: "spring", stiffness: 80, damping: 12, delay: index * 0.05 }
                 }
               >
-                <FlowerComponent className="h-16 w-auto" />
+                <FlowerComponent className="h-52 w-auto" />
               </motion.div>
             );
           })}
