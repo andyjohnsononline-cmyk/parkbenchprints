@@ -167,15 +167,21 @@ export default function InsideContent({
     return () => clearTimeout(timer);
   }, [liftedFlower]);
 
-  // Click on lifted flower → auto-place in paper
+  // Click on lifted flower → place in paper with slight random spread
   const handleLiftedClick = useCallback(() => {
     const current = liftedFlowerRef.current;
     if (current) {
-      handlePick(current.id, 20 + Math.random() * 60, 20 + Math.random() * 60);
+      const count = placedFlowers.length;
+      // Spread flowers across the paper area evenly with slight jitter
+      const baseX = 25 + (count % 4) * 17;
+      const baseY = 25 + Math.floor(count / 4) * 20;
+      const jitterX = (Math.random() - 0.5) * 10;
+      const jitterY = (Math.random() - 0.5) * 10;
+      handlePick(current.id, baseX + jitterX, baseY + jitterY);
     }
     liftedFlowerRef.current = null;
     setLiftedFlower(null);
-  }, [handlePick]);
+  }, [handlePick, placedFlowers.length]);
 
   // Resolve the flower component for the lifted flower
   const liftedFlowerInfo = liftedFlower
