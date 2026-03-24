@@ -60,15 +60,15 @@ export default function BloemenmarktPage() {
         }}
         transition={{ duration: 0.5, delay: isOpen ? 0 : 0.2 }}
       >
-        {/* Close button — visible when card is open */}
+        {/* Close button — fixed position so it's always reachable */}
         <AnimatePresence>
           {isOpen && (
             <motion.button
               type="button"
-              className="absolute -top-8 left-1/2 z-40 -translate-x-1/2 border-b border-foreground/30 pb-1 text-sm tracking-[0.15em] text-accent uppercase transition-colors hover:border-accent hover:text-accent focus-visible:outline-2 focus-visible:outline-accent"
-              initial={prefersReduced ? false : { opacity: 0, y: 10 }}
+              className="fixed top-4 left-1/2 z-50 -translate-x-1/2 rounded-full bg-white/90 px-4 py-1.5 text-xs tracking-[0.15em] text-accent uppercase shadow-sm backdrop-blur-sm transition-colors hover:bg-white focus-visible:outline-2 focus-visible:outline-accent"
+              initial={prefersReduced ? false : { opacity: 0, y: -10 }}
               animate={{ opacity: 1, y: 0 }}
-              exit={prefersReduced ? { opacity: 0 } : { opacity: 0, y: 10 }}
+              exit={prefersReduced ? { opacity: 0 } : { opacity: 0, y: -10 }}
               transition={{ duration: 0.3, delay: 0.3 }}
               onClick={() => setIsOpen(false)}
             >
