@@ -313,9 +313,9 @@ export default function InsideContent({
               left: heldFlower.x,
               top: heldFlower.y,
             }}
-            initial={prefersReduced ? false : { scale: 0.3, opacity: 0, x: "-50%" }}
-            animate={{ scale: 1, opacity: 1, x: "-50%" }}
-            exit={prefersReduced ? { opacity: 0, x: "-50%" } : { scale: 0.5, opacity: 0, x: "-50%", transition: { duration: 0.15 } }}
+            initial={prefersReduced ? false : { scale: 0.3, opacity: 0, x: "-50%", y: "-50%" }}
+            animate={{ scale: 1, opacity: 1, x: "-50%", y: "-50%" }}
+            exit={prefersReduced ? { opacity: 0, x: "-50%", y: "-50%" } : { scale: 0.5, opacity: 0, x: "-50%", y: "-50%", transition: { duration: 0.15 } }}
             transition={
               prefersReduced
                 ? { duration: 0.01 }
