@@ -46,7 +46,7 @@ export default function InsideContent({
       .then((text) => {
         const patched = text.replace(
           "<svg ",
-          '<svg preserveAspectRatio="xMidYMax meet" '
+          '<svg width="100%" height="100%" preserveAspectRatio="xMidYMax meet" '
         );
         setRawSvg(patched);
       })
