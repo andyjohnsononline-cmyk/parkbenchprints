@@ -240,11 +240,10 @@ export default function InsideContent({
             exit={prefersReduced ? { opacity: 0 } : { opacity: 0 }}
             transition={{ duration: 0.3 }}
           >
-            {/* SVG scene with ~10% breathing room */}
+            {/* Full SVG scene — fills card interior */}
             <div
               ref={svgContainerRef}
-              className="market-svg-container absolute overflow-hidden"
-              style={{ top: "3%", right: "5%", bottom: "3%", left: "5%" }}
+              className="market-svg-container absolute inset-0"
               data-hint={isOpen && placedFlowers.length === 0 ? "true" : undefined}
               onPointerDown={handleSvgPointerDown}
               onKeyDown={handleSvgKeyDown}
@@ -313,11 +312,10 @@ export default function InsideContent({
             style={{
               left: heldFlower.x,
               top: heldFlower.y,
-              transform: "translate(-50%, 0%)",
             }}
-            initial={prefersReduced ? false : { scale: 0.3, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            exit={prefersReduced ? { opacity: 0 } : { scale: 0.5, opacity: 0, transition: { duration: 0.15 } }}
+            initial={prefersReduced ? false : { scale: 0.3, opacity: 0, x: "-50%" }}
+            animate={{ scale: 1, opacity: 1, x: "-50%" }}
+            exit={prefersReduced ? { opacity: 0, x: "-50%" } : { scale: 0.5, opacity: 0, x: "-50%", transition: { duration: 0.15 } }}
             transition={
               prefersReduced
                 ? { duration: 0.01 }
