@@ -46,7 +46,7 @@ export default function InsideContent({
       .then((text) => {
         const patched = text.replace(
           "<svg ",
-          '<svg preserveAspectRatio="xMidYMid slice" '
+          '<svg preserveAspectRatio="xMidYMax meet" '
         );
         setRawSvg(patched);
       })
@@ -243,8 +243,8 @@ export default function InsideContent({
             {/* SVG scene with ~10% breathing room */}
             <div
               ref={svgContainerRef}
-              className="market-svg-container absolute inset-0 overflow-hidden"
-              style={{ padding: "5%" }}
+              className="market-svg-container absolute overflow-hidden"
+              style={{ top: "3%", right: "5%", bottom: "3%", left: "5%" }}
               data-hint={isOpen && placedFlowers.length === 0 ? "true" : undefined}
               onPointerDown={handleSvgPointerDown}
               onKeyDown={handleSvgKeyDown}
@@ -313,7 +313,7 @@ export default function InsideContent({
             style={{
               left: heldFlower.x,
               top: heldFlower.y,
-              transform: "translate(-50%, -75%)",
+              transform: "translate(-50%, 0%)",
             }}
             initial={prefersReduced ? false : { scale: 0.3, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
