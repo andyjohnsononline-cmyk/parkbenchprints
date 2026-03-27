@@ -46,7 +46,7 @@ export default function InsideContent({
       .then((text) => {
         const patched = text.replace(
           "<svg ",
-          '<svg preserveAspectRatio="xMidYMid slice" '
+          '<svg width="100%" height="100%" preserveAspectRatio="xMidYMax meet" '
         );
         setRawSvg(patched);
       })
@@ -227,54 +227,81 @@ export default function InsideContent({
     ? FLOWERS.find((f) => f.id === heldFlower.id)
     : null;
 
+  const heldScale = heldFlowerInfo?.scale ?? 1;
+
   return (
     <div className="relative flex h-full flex-col bg-[#FFF8F0]">
-      {/* Full SVG scene — includes market stall and paper area */}
-      <div className="relative flex-1" style={{ minHeight: 0 }}>
-        <div
-          ref={svgContainerRef}
-          className="market-svg-container absolute inset-0 overflow-hidden"
-          data-hint={isOpen && placedFlowers.length === 0 ? "true" : undefined}
-          onPointerDown={handleSvgPointerDown}
-          onKeyDown={handleSvgKeyDown}
-          dangerouslySetInnerHTML={svgContent ? { __html: svgContent } : undefined}
-        />
+      {/* Market scene — fades out when bouquet is made */}
+      <AnimatePresence>
+        {!bouquetMade && (
+          <motion.div
+            className="relative flex-1"
+            style={{ minHeight: 0 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.3 }}
+          >
+            {/* Full SVG scene — fills card interior */}
+            <div
+              ref={svgContainerRef}
+              className="market-svg-container absolute inset-0"
+              data-hint={isOpen && placedFlowers.length === 0 ? "true" : undefined}
+              onPointerDown={handleSvgPointerDown}
+              onKeyDown={handleSvgKeyDown}
+              dangerouslySetInnerHTML={svgContent ? { __html: svgContent } : undefined}
+            />
 
-        {/* Drag hint overlay */}
-        <motion.p
-          className="pointer-events-none relative z-10 pt-2 text-center text-xs tracking-wider text-white/70 uppercase drop-shadow-sm"
-          animate={{
-            opacity:
-              isOpen && placedFlowers.length === 0
-                ? prefersReduced
-                  ? 0.5
-                  : [0.3, 0.8, 0.3]
-                : 0,
-          }}
-          transition={
-            prefersReduced
-              ? {}
-              : { duration: 2, repeat: Infinity, ease: "easeInOut" }
-          }
-        >
-          {t("bloemen.dragHint", locale)}
-        </motion.p>
+            {/* Drag hint overlay */}
+            <motion.p
+              className="pointer-events-none relative z-10 pt-2 text-center text-xs tracking-wider text-white/70 uppercase drop-shadow-sm"
+              animate={{
+                opacity:
+                  isOpen && placedFlowers.length === 0
+                    ? prefersReduced
+                      ? 0.5
+                      : [0.3, 0.8, 0.3]
+                    : 0,
+              }}
+              transition={
+                prefersReduced
+                  ? {}
+                  : { duration: 2, repeat: Infinity, ease: "easeInOut" }
+              }
+            >
+              {t("bloemen.dragHint", locale)}
+            </motion.p>
 
-        {/* Bouquet overlay — positioned over the market paper in the SVG scene */}
-        <div
-          ref={paperRef}
-          className="pointer-events-none absolute z-10 overflow-visible"
-          style={{ left: "70%", top: "0%", width: "30%", height: "58%" }}
-        >
-          <PaperArea
-            placedFlowers={placedFlowers}
-            bouquetMade={bouquetMade}
-            onMakeBouquet={handleMakeBouquet}
-            onReset={handleReset}
-            locale={locale}
-          />
+            {/* Bouquet overlay — positioned over the market paper in the SVG scene */}
+            <div
+              ref={paperRef}
+              className="pointer-events-none absolute z-10 overflow-visible"
+              style={{ left: "70%", top: "0%", width: "30%", height: "58%" }}
+            >
+              <PaperArea
+                placedFlowers={placedFlowers}
+                bouquetMade={false}
+                onMakeBouquet={handleMakeBouquet}
+                onReset={handleReset}
+                locale={locale}
+              />
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Bouquet reveal — centered in full card after market fades */}
+      {bouquetMade && (
+        <div className="relative flex flex-1 items-center justify-center">
+          <div className="relative h-full w-3/4">
+            <PaperArea
+              placedFlowers={placedFlowers}
+              bouquetMade={true}
+              onMakeBouquet={handleMakeBouquet}
+              onReset={handleReset}
+              locale={locale}
+            />
+          </div>
         </div>
-      </div>
+      )}
 
       {/* Held flower — follows pointer */}
       <AnimatePresence>
@@ -285,18 +312,19 @@ export default function InsideContent({
             style={{
               left: heldFlower.x,
               top: heldFlower.y,
-              transform: "translate(-50%, -50%)",
             }}
-            initial={prefersReduced ? false : { scale: 0.3, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            exit={prefersReduced ? { opacity: 0 } : { scale: 0.5, opacity: 0, transition: { duration: 0.15 } }}
+            initial={prefersReduced ? false : { scale: 0.3, opacity: 0, x: "-50%", y: "-50%" }}
+            animate={{ scale: 1, opacity: 1, x: "-50%", y: "-50%" }}
+            exit={prefersReduced ? { opacity: 0, x: "-50%", y: "-50%" } : { scale: 0.5, opacity: 0, x: "-50%", y: "-50%", transition: { duration: 0.15 } }}
             transition={
               prefersReduced
                 ? { duration: 0.01 }
                 : { type: "spring", stiffness: 400, damping: 25 }
             }
           >
-            <heldFlowerInfo.Component className="h-36 w-auto drop-shadow-lg" />
+            <div style={{ transform: `scale(${heldScale})`, transformOrigin: "bottom center" }}>
+              <heldFlowerInfo.Component className="h-36 w-auto drop-shadow-lg" />
+            </div>
           </motion.div>
         )}
       </AnimatePresence>

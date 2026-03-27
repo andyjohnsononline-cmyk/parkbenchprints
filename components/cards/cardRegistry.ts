@@ -19,8 +19,8 @@ export const cards: CardInfo[] = [
   },
   {
     slug: "bloemenmarkt",
-    title: "Bloemenmarkt",
-    subtitle: "Flower Market",
+    title: "Flower Market",
+    subtitle: "",
     description: "Browse the buckets and build your own bouquet...",
     available: true,
   },

@@ -56,6 +56,18 @@ const strings: Record<string, Record<Locale, string>> = {
     nl: "Leg bloemen hier neer",
     en: "Place flowers here",
   },
+  "bloemen.flowerCount": {
+    nl: "{count} bloem",
+    en: "{count} flower",
+  },
+  "bloemen.flowerCountPlural": {
+    nl: "{count} bloemen",
+    en: "{count} flowers",
+  },
+  "bloemen.bouquetReady": {
+    nl: "Boeket klaar!",
+    en: "Bouquet ready!",
+  },
 
   // Broken link fallback
   "share.brokenLink": {

@@ -2,6 +2,7 @@
 
 import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
 import { FLOWERS } from "./flowers";
+import BouquetClosedSVG from "./flowers/BouquetClosedSVG";
 import type { Locale } from "@/lib/i18n";
 import { t } from "@/lib/i18n";
 
@@ -48,6 +49,79 @@ const BOUQUET_POSITIONS = [
   { x: 60, y: 88, rotate: 8 },
 ];
 
+/** Shared flower arrangement renderer — used for both fan and bouquet modes. */
+function FlowerArrangement({
+  flowers,
+  positions,
+  isBouquet,
+  prefersReduced,
+}: {
+  flowers: PlacedFlower[];
+  positions: typeof FAN_POSITIONS;
+  isBouquet: boolean;
+  prefersReduced: boolean | null;
+}) {
+  // For bouquet mode, sort by scale descending so tall flowers render first (back)
+  // and short flowers render last (front / higher z-index)
+  const ordered = isBouquet
+    ? [...flowers].sort((a, b) => {
+        const scaleA = FLOWERS.find((f) => f.id === a.id)?.scale ?? 1;
+        const scaleB = FLOWERS.find((f) => f.id === b.id)?.scale ?? 1;
+        return scaleB - scaleA; // tall first = lower z-index
+      })
+    : flowers;
+
+  return (
+    <>
+      {ordered.map((placed, index) => {
+        const flower = FLOWERS.find((f) => f.id === placed.id);
+        if (!flower) return null;
+        const FlowerComponent = flower.Component;
+        const pos = positions[index % positions.length];
+        const scale = flower.scale ?? 1;
+
+        return (
+          <motion.div
+            key={placed.instanceId}
+            className="absolute origin-bottom"
+            style={{
+              left: `${pos.x}%`,
+              top: `${pos.y}%`,
+              zIndex: index + 1,
+            }}
+            initial={
+              prefersReduced
+                ? false
+                : isBouquet
+                  ? { rotate: placed.rotate }
+                  : { scale: 0.3, opacity: 0, rotate: 0 }
+            }
+            animate={{
+              scale: 1,
+              opacity: 1,
+              rotate: pos.rotate,
+              x: "-50%",
+              y: "-100%",
+            }}
+            exit={prefersReduced ? { opacity: 0 } : { scale: 0.3, opacity: 0 }}
+            transition={
+              prefersReduced
+                ? { duration: 0.01 }
+                : isBouquet
+                  ? { type: "spring", stiffness: 80, damping: 12, delay: index * 0.05 }
+                  : { type: "spring", stiffness: 120, damping: 12, mass: 0.8 }
+            }
+          >
+            <div style={{ transform: `scale(${scale})`, transformOrigin: "bottom center" }}>
+              <FlowerComponent className="h-52 w-auto" />
+            </div>
+          </motion.div>
+        );
+      })}
+    </>
+  );
+}
+
 export default function PaperArea({
   placedFlowers,
   bouquetMade,
@@ -57,6 +131,11 @@ export default function PaperArea({
 }: PaperAreaProps) {
   const prefersReduced = useReducedMotion();
   const isEmpty = placedFlowers.length === 0;
+
+  const flowerCountText =
+    placedFlowers.length === 1
+      ? t("bloemen.flowerCount", locale).replace("{count}", "1")
+      : t("bloemen.flowerCountPlural", locale).replace("{count}", String(placedFlowers.length));
 
   return (
     <div
@@ -73,78 +152,42 @@ export default function PaperArea({
           </p>
         )}
 
-        {/* Placed flowers — arranged in a vertical fan, stems down, blooms up */}
+        {/* Placed flowers — fan or bouquet arrangement */}
         <AnimatePresence>
-        {!bouquetMade &&
-          placedFlowers.map((placed, index) => {
-            const flower = FLOWERS.find((f) => f.id === placed.id);
-            if (!flower) return null;
-            const FlowerComponent = flower.Component;
-            const pos = FAN_POSITIONS[index % FAN_POSITIONS.length];
-
-            return (
-              <motion.div
-                key={placed.instanceId}
-                className="absolute origin-bottom"
-                style={{
-                  left: `${pos.x}%`,
-                  top: `${pos.y}%`,
-                  zIndex: index + 1,
-                }}
-                initial={prefersReduced ? false : { scale: 0.3, opacity: 0, rotate: 0 }}
-                animate={{
-                  scale: 1,
-                  opacity: 1,
-                  rotate: pos.rotate,
-                  x: "-50%",
-                  y: "-100%",
-                }}
-                exit={prefersReduced ? { opacity: 0 } : { scale: 0.3, opacity: 0 }}
-                transition={
-                  prefersReduced
-                    ? { duration: 0.01 }
-                    : { type: "spring", stiffness: 120, damping: 12, mass: 0.8 }
-                }
-              >
-                <FlowerComponent className="h-52 w-auto" />
-              </motion.div>
-            );
-          })}
+          {!bouquetMade && (
+            <FlowerArrangement
+              flowers={placedFlowers}
+              positions={FAN_POSITIONS}
+              isBouquet={false}
+              prefersReduced={prefersReduced}
+            />
+          )}
         </AnimatePresence>
 
-        {/* Flowers gathered in bouquet — tighter fan */}
-        {bouquetMade &&
-          placedFlowers.map((placed, index) => {
-            const flower = FLOWERS.find((f) => f.id === placed.id);
-            if (!flower) return null;
-            const FlowerComponent = flower.Component;
-            const pos = BOUQUET_POSITIONS[index % BOUQUET_POSITIONS.length];
-
-            return (
-              <motion.div
-                key={placed.instanceId}
-                className="absolute origin-bottom"
-                style={{
-                  left: `${pos.x}%`,
-                  top: `${pos.y}%`,
-                  zIndex: index + 1,
-                }}
-                initial={prefersReduced ? false : { rotate: placed.rotate }}
-                animate={{
-                  rotate: pos.rotate,
-                  x: "-50%",
-                  y: "-100%",
-                }}
-                transition={
-                  prefersReduced
-                    ? { duration: 0.01 }
-                    : { type: "spring", stiffness: 80, damping: 12, delay: index * 0.05 }
-                }
-              >
-                <FlowerComponent className="h-52 w-auto" />
-              </motion.div>
-            );
-          })}
+        {bouquetMade && (
+          <>
+            <FlowerArrangement
+              flowers={placedFlowers}
+              positions={BOUQUET_POSITIONS}
+              isBouquet={true}
+              prefersReduced={prefersReduced}
+            />
+            {/* Bow placeholder — uses BouquetClosedSVG until artist delivers bow asset */}
+            <motion.div
+              className="absolute z-20"
+              style={{ left: "30%", bottom: "15%", width: "40%" }}
+              initial={prefersReduced ? false : { opacity: 0, scale: 0.5 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={
+                prefersReduced
+                  ? { duration: 0.01 }
+                  : { type: "spring", stiffness: 120, damping: 10, delay: 0.4 }
+              }
+            >
+              <BouquetClosedSVG className="w-full" />
+            </motion.div>
+          </>
+        )}
 
         {/* Controls positioned below the paper area so they don't cover art */}
         {!isEmpty && (
@@ -157,8 +200,7 @@ export default function PaperArea({
             }
           >
             <p className="text-xs tracking-wider text-foreground/50 uppercase">
-              {placedFlowers.length}{" "}
-              {placedFlowers.length === 1 ? "flower" : "flowers"}
+              {flowerCountText}
             </p>
 
             {!bouquetMade && (
@@ -208,13 +250,18 @@ export default function PaperArea({
 
       {/* Live region for screen reader */}
       <div aria-live="polite" className="sr-only">
-        {placedFlowers.length > 0 &&
-          (() => {
-            const last = placedFlowers[placedFlowers.length - 1];
-            const lastFlower = FLOWERS.find((f) => f.id === last?.id);
-            if (!lastFlower) return null;
-            return `${lastFlower.name.en} added`;
-          })()}
+        {bouquetMade
+          ? t("bloemen.bouquetReady", locale)
+          : placedFlowers.length > 0
+            ? (() => {
+                const last = placedFlowers[placedFlowers.length - 1];
+                const lastFlower = FLOWERS.find((f) => f.id === last?.id);
+                if (!lastFlower) return null;
+                return locale === "nl"
+                  ? `${lastFlower.name[locale]} toegevoegd`
+                  : `${lastFlower.name[locale]} added`;
+              })()
+            : null}
       </div>
     </div>
   );
