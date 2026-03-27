@@ -237,7 +237,7 @@ export default function InsideContent({
           <motion.div
             className="relative flex-1"
             style={{ minHeight: 0 }}
-            exit={prefersReduced ? { opacity: 0 } : { opacity: 0 }}
+            exit={{ opacity: 0 }}
             transition={{ duration: 0.3 }}
           >
             {/* Full SVG scene — fills card interior */}

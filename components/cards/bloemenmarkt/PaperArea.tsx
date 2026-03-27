@@ -257,7 +257,9 @@ export default function PaperArea({
                 const last = placedFlowers[placedFlowers.length - 1];
                 const lastFlower = FLOWERS.find((f) => f.id === last?.id);
                 if (!lastFlower) return null;
-                return `${lastFlower.name[locale]} added`;
+                return locale === "nl"
+                  ? `${lastFlower.name[locale]} toegevoegd`
+                  : `${lastFlower.name[locale]} added`;
               })()
             : null}
       </div>
