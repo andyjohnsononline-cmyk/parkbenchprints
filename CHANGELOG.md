@@ -2,6 +2,26 @@
 
 All notable changes to Park Bench Prints will be documented in this file.
 
+## [0.2.2.0] - 2026-03-27
+
+### Added
+- Proportional flower sizing — scale ratios based on real-life proportions (snapdragon 1.4x, hydrangea 1.2x, peony 1.1x, tulip 0.9x)
+- Bouquet reveal — market scene fades out, flowers re-center in full card with BouquetClosedSVG bow
+- Flower count with i18n support (singular/plural in EN and NL)
+- Screen reader bouquet-ready announcement via aria-live region
+- Bouquet z-ordering — tall flowers render behind short ones for natural layering
+
+### Changed
+- Card renamed from "Bloemenmarkt" to "Flower Market" in card registry
+- SVG scene uses `preserveAspectRatio="xMidYMax meet"` with explicit width/height for reliable fill
+- Held flower centering uses Framer Motion `x`/`y` properties instead of CSS transform to avoid override conflict
+
+### Fixed
+- Held flower appearing offset from cursor (Framer Motion `animate` was overriding CSS `translate`)
+- SVG market scene awning clipped by container (missing `width="100%"` and `height="100%"` attributes)
+- Hardcoded English "added" in screen reader live region — now localized for NL
+- Dead ternary in market scene exit animation simplified
+
 ## [0.2.1.0] - 2026-03-24
 
 ### Added
