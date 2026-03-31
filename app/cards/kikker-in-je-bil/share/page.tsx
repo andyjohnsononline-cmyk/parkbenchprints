@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useSyncExternalStore } from "react";
+import { useState, useEffect, useSyncExternalStore } from "react";
 import { motion } from "framer-motion";
 import Link from "next/link";
 import CardShell from "@/components/cards/CardShell";
@@ -33,9 +33,10 @@ export default function SharePage() {
   const locale: Locale = shareData?.l ?? "nl";
 
   // Use variant from share URL if available, otherwise random
-  const [fallbackVariant] = useState<KikkerVariant>(() =>
-    Math.random() > 0.5 ? "banana" : "duck",
-  );
+  const [fallbackVariant, setFallbackVariant] = useState<KikkerVariant>("banana");
+  useEffect(() => {
+    setFallbackVariant(Math.random() > 0.5 ? "banana" : "duck");
+  }, []);
   const variant: KikkerVariant = shareData?.v ?? fallbackVariant;
 
   const handleOpenChange = (open: boolean) => {

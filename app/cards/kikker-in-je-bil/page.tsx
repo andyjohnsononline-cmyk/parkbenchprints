@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import Link from "next/link";
 import CardShell from "@/components/cards/CardShell";
@@ -10,9 +10,11 @@ import FrontCover, {
 import InsideContent from "@/components/cards/kikker/InsideContent";
 
 export default function KikkerInJeBilPage() {
-  const [variant] = useState<KikkerVariant>(() =>
-    Math.random() > 0.5 ? "banana" : "duck",
-  );
+  const [variant, setVariant] = useState<KikkerVariant | null>(null);
+
+  useEffect(() => {
+    setVariant(Math.random() > 0.5 ? "banana" : "duck");
+  }, []);
 
   return (
     <section className="relative min-h-screen overflow-hidden pt-32 pb-20">
@@ -43,17 +45,19 @@ export default function KikkerInJeBilPage() {
         </p>
       </motion.div>
 
-      <motion.div
-        initial={{ opacity: 0, scale: 0.9 }}
-        animate={{ opacity: 1, scale: 1 }}
-        transition={{ duration: 0.5, delay: 0.2 }}
-      >
-        <CardShell
-          frontCover={<FrontCover variant={variant} />}
-          insideContent={<InsideContent isOpen={false} />}
-          cardStyle={{ aspectRatio: "1 / 1" }}
-        />
-      </motion.div>
+      {variant && (
+        <motion.div
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.5, delay: 0.2 }}
+        >
+          <CardShell
+            frontCover={<FrontCover variant={variant} />}
+            insideContent={<InsideContent isOpen={false} />}
+            cardStyle={{ aspectRatio: "1 / 1" }}
+          />
+        </motion.div>
+      )}
 
       <motion.div
         className="mt-10 text-center"

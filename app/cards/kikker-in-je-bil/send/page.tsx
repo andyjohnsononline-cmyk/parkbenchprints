@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { motion } from "framer-motion";
 import Link from "next/link";
 import CardShell from "@/components/cards/CardShell";
@@ -18,9 +18,11 @@ export default function SendPage() {
   const [form, setForm] = useState({ from: "", to: "", message: "" });
   const [shareUrl, setShareUrl] = useState<string | null>(null);
   const [isOpen, setIsOpen] = useState(false);
-  const [variant] = useState<KikkerVariant>(() =>
-    Math.random() > 0.5 ? "banana" : "duck",
-  );
+  const [variant, setVariant] = useState<KikkerVariant>("banana");
+
+  useEffect(() => {
+    setVariant(Math.random() > 0.5 ? "banana" : "duck");
+  }, []);
 
   const handleOpenChange = useCallback((open: boolean) => {
     setIsOpen(open);
