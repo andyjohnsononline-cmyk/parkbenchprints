@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import Link from "next/link";
 import CardShell from "@/components/cards/CardShell";
@@ -17,15 +17,10 @@ export default function SendPage() {
   const [locale, setLocale] = useState<Locale>(getDefaultLocale);
   const [form, setForm] = useState({ from: "", to: "", message: "" });
   const [shareUrl, setShareUrl] = useState<string | null>(null);
-  const [isOpen, setIsOpen] = useState(false);
   const [variant, setVariant] = useState<KikkerVariant>("banana");
 
   useEffect(() => {
     setVariant(Math.random() > 0.5 ? "banana" : "duck");
-  }, []);
-
-  const handleOpenChange = useCallback((open: boolean) => {
-    setIsOpen(open);
   }, []);
 
   function handleCreate() {
@@ -190,11 +185,9 @@ export default function SendPage() {
             {t("send.preview", locale)}
           </p>
           <CardShell
-            onOpenChange={handleOpenChange}
             frontCover={<FrontCover variant={variant} locale={locale} />}
             insideContent={
               <InsideContent
-                isOpen={isOpen}
                 messageContent={messageContent}
               />
             }

@@ -53,7 +53,7 @@ export default function KikkerInJeBilPage() {
         >
           <CardShell
             frontCover={<FrontCover variant={variant} />}
-            insideContent={<InsideContent isOpen={false} />}
+            insideContent={<InsideContent />}
             cardStyle={{ aspectRatio: "1 / 1" }}
           />
         </motion.div>

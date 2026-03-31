@@ -3,12 +3,10 @@
 import { type ReactNode } from "react";
 
 interface InsideContentProps {
-  isOpen: boolean;
   messageContent?: ReactNode;
 }
 
 export default function InsideContent({
-  isOpen,
   messageContent,
 }: InsideContentProps) {
   const basePath = process.env.NEXT_PUBLIC_BASE_PATH || "";

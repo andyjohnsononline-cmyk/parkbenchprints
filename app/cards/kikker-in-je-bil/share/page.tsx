@@ -85,7 +85,6 @@ export default function SharePage() {
           frontCover={<FrontCover variant={variant} locale={locale} />}
           insideContent={
             <InsideContent
-              isOpen={isOpen}
               messageContent={messageContent}
             />
           }
