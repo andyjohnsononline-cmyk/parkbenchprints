@@ -8,6 +8,7 @@ interface CardShellProps {
   insideContent: ReactNode;
   popUpContent?: ReactNode;
   onOpenChange?: (isOpen: boolean) => void;
+  cardStyle?: React.CSSProperties;
   className?: string;
 }
 
@@ -32,6 +33,7 @@ export default function CardShell({
   insideContent,
   popUpContent,
   onOpenChange,
+  cardStyle,
   className = "",
 }: CardShellProps) {
   const [isOpen, setIsOpen] = useState(false);
@@ -66,6 +68,7 @@ export default function CardShell({
           style={{
             width: "min(80vw, 500px)",
             aspectRatio: "5 / 7",
+            ...cardStyle,
             transformStyle: "preserve-3d",
           }}
         >

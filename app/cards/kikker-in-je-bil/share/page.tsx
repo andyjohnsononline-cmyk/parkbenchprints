@@ -4,7 +4,9 @@ import { useState, useSyncExternalStore } from "react";
 import { motion } from "framer-motion";
 import Link from "next/link";
 import CardShell from "@/components/cards/CardShell";
-import FrontCover from "@/components/cards/kikker/FrontCover";
+import FrontCover, {
+  type KikkerVariant,
+} from "@/components/cards/kikker/FrontCover";
 import InsideContent from "@/components/cards/kikker/InsideContent";
 import PersonalMessage from "@/components/cards/PersonalMessage";
 import { decode } from "@/lib/shareCodec";
@@ -27,16 +29,20 @@ export default function SharePage() {
   const hash = useSyncExternalStore(subscribeToHash, getHash, getServerHash);
   const shareData = hash ? decode(hash) : null;
   const [isOpen, setIsOpen] = useState(false);
-  const [frogOut, setFrogOut] = useState(false);
 
   const locale: Locale = shareData?.l ?? "nl";
 
+  // Use variant from share URL if available, otherwise random
+  const [fallbackVariant] = useState<KikkerVariant>(() =>
+    Math.random() > 0.5 ? "banana" : "duck",
+  );
+  const variant: KikkerVariant = shareData?.v ?? fallbackVariant;
+
   const handleOpenChange = (open: boolean) => {
     setIsOpen(open);
-    if (!open) setFrogOut(false);
   };
 
-  const topContent = shareData ? (
+  const messageContent = shareData ? (
     <PersonalMessage
       from={shareData.f}
       to={shareData.t}
@@ -75,16 +81,14 @@ export default function SharePage() {
       >
         <CardShell
           onOpenChange={handleOpenChange}
-          frontCover={<FrontCover locale={locale} />}
+          frontCover={<FrontCover variant={variant} locale={locale} />}
           insideContent={
             <InsideContent
               isOpen={isOpen}
-              frogOut={frogOut}
-              onFrogOut={() => setFrogOut(true)}
-              topContent={topContent}
-              locale={locale}
+              messageContent={messageContent}
             />
           }
+          cardStyle={{ aspectRatio: "1 / 1" }}
         />
       </motion.div>
 
@@ -100,22 +104,12 @@ export default function SharePage() {
         </motion.p>
       )}
 
-      {/* Reveal text */}
-      <motion.p
-        className="mt-10 text-center font-serif text-2xl text-accent md:text-3xl"
-        initial={{ opacity: 0 }}
-        animate={{ opacity: frogOut ? 1 : 0, y: frogOut ? 0 : 10 }}
-        transition={{ duration: 0.4, delay: frogOut ? 0.3 : 0 }}
-      >
-        Kikker in je bil!
-      </motion.p>
-
-      {/* Attribution and send-your-own */}
+      {/* Attribution and send-your-own (visible after card opens) */}
       <motion.div
         className="mt-6 text-center"
         initial={{ opacity: 0 }}
-        animate={{ opacity: frogOut ? 1 : 0, y: frogOut ? 0 : 10 }}
-        transition={{ duration: 0.4, delay: frogOut ? 0.6 : 0 }}
+        animate={{ opacity: isOpen ? 1 : 0, y: isOpen ? 0 : 10 }}
+        transition={{ duration: 0.4, delay: isOpen ? 0.3 : 0 }}
       >
         {shareData && (
           <p className="text-foreground/50">

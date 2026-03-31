@@ -4,7 +4,9 @@ import { useState, useCallback } from "react";
 import { motion } from "framer-motion";
 import Link from "next/link";
 import CardShell from "@/components/cards/CardShell";
-import FrontCover from "@/components/cards/kikker/FrontCover";
+import FrontCover, {
+  type KikkerVariant,
+} from "@/components/cards/kikker/FrontCover";
 import InsideContent from "@/components/cards/kikker/InsideContent";
 import PersonalMessage from "@/components/cards/PersonalMessage";
 import ShareLink from "@/components/ShareLink";
@@ -16,11 +18,12 @@ export default function SendPage() {
   const [form, setForm] = useState({ from: "", to: "", message: "" });
   const [shareUrl, setShareUrl] = useState<string | null>(null);
   const [isOpen, setIsOpen] = useState(false);
-  const [frogOut, setFrogOut] = useState(false);
+  const [variant] = useState<KikkerVariant>(() =>
+    Math.random() > 0.5 ? "banana" : "duck",
+  );
 
   const handleOpenChange = useCallback((open: boolean) => {
     setIsOpen(open);
-    if (!open) setFrogOut(false);
   }, []);
 
   function handleCreate() {
@@ -30,6 +33,7 @@ export default function SendPage() {
       t: form.to,
       m: form.message,
       l: locale,
+      v: variant,
     });
     const base =
       typeof window !== "undefined"
@@ -41,7 +45,7 @@ export default function SendPage() {
 
   const hasContent = form.from || form.to || form.message;
 
-  const topContent = hasContent ? (
+  const messageContent = hasContent ? (
     <PersonalMessage
       from={form.from}
       to={form.to}
@@ -185,16 +189,14 @@ export default function SendPage() {
           </p>
           <CardShell
             onOpenChange={handleOpenChange}
-            frontCover={<FrontCover locale={locale} />}
+            frontCover={<FrontCover variant={variant} locale={locale} />}
             insideContent={
               <InsideContent
                 isOpen={isOpen}
-                frogOut={frogOut}
-                onFrogOut={() => setFrogOut(true)}
-                topContent={topContent}
-                locale={locale}
+                messageContent={messageContent}
               />
             }
+            cardStyle={{ aspectRatio: "1 / 1" }}
           />
         </motion.div>
       </div>

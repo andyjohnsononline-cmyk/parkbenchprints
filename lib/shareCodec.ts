@@ -3,6 +3,7 @@ export type ShareData = {
   t: string; // to (recipient name)
   m: string; // message
   l?: "nl" | "en"; // locale
+  v?: "banana" | "duck"; // kikker card cover variant
 };
 
 const MAX_MESSAGE_LENGTH = 200;
@@ -14,6 +15,7 @@ export function encode(data: ShareData): string {
     t: data.t.trim().slice(0, MAX_NAME_LENGTH),
     m: data.m.trim().slice(0, MAX_MESSAGE_LENGTH),
     ...(data.l && { l: data.l }),
+    ...(data.v && { v: data.v }),
   };
   return btoa(
     encodeURIComponent(JSON.stringify(sanitized)).replace(
@@ -45,6 +47,7 @@ export function decode(hash: string): ShareData | null {
       t: parsed.t.slice(0, MAX_NAME_LENGTH),
       m: parsed.m.slice(0, MAX_MESSAGE_LENGTH),
       ...(parsed.l === "nl" || parsed.l === "en" ? { l: parsed.l } : {}),
+      ...(parsed.v === "banana" || parsed.v === "duck" ? { v: parsed.v } : {}),
     };
   } catch {
     return null;
