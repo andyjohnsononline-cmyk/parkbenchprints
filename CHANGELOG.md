@@ -12,13 +12,11 @@ All notable changes to Park Bench Prints will be documented in this file.
 - Personal messages now appear on the left half of the card interior
 
 ### Added
-- `cardStyle` prop on CardShell for per-card aspect ratio overrides (used for square kikker card, backwards compatible)
-- Cover variant field (`v`) in share URL codec
+- Share links now preserve which cover variant the sender saw, so the recipient gets the same card
 
 ### Removed
-- Drag-the-frog interaction, idle bounce animation, launched wobble
-- Programmer-art FrogSVG and BillenSVG components
-- "Kikker in je bil!" reveal text below card (the card itself delivers the joke)
+- Drag-the-frog interaction replaced by open-to-reveal (the card itself delivers the joke)
+- Placeholder programmer-art illustrations replaced by artist originals
 
 ## [0.2.2.0] - 2026-03-27
 
