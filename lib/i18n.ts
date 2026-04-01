@@ -35,9 +35,6 @@ const strings: Record<string, Record<Locale, string>> = {
   "shareLink.share": { nl: "Delen", en: "Share" },
   "shareLink.title": { nl: "Je link is klaar!", en: "Your link is ready!" },
 
-  // Card interaction
-  "card.dragHint": { nl: "↑ Trek eruit!", en: "↑ Pull it out!" },
-
   // Bloemenmarkt
   "bloemen.dragHint": {
     nl: "Sleep bloemen naar je boeket",

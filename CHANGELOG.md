@@ -2,6 +2,22 @@
 
 All notable changes to Park Bench Prints will be documented in this file.
 
+## [0.2.3.0] - 2026-04-01
+
+### Changed
+- Kikker in je Bil card now uses artist-illustrated assets: two boxer shorts cover variants (banana on lavender, duck on mint green) and a hand-drawn frog
+- Card format changed from portrait (5:7) to square, matching the physical printed card
+- Simplified interaction from drag-the-frog to open-to-reveal. The punchline is opening the card.
+- Cover variant randomly selected on each visit, persisted in share URLs so sender and recipient see the same cover
+- Personal messages now appear on the left half of the card interior
+
+### Added
+- Share links now preserve which cover variant the sender saw, so the recipient gets the same card
+
+### Removed
+- Drag-the-frog interaction replaced by open-to-reveal (the card itself delivers the joke)
+- Placeholder programmer-art illustrations replaced by artist originals
+
 ## [0.2.2.0] - 2026-03-27
 
 ### Added

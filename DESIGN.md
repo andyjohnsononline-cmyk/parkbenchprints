@@ -81,16 +81,11 @@
 - **Duration:** micro(50-100ms) short(150-250ms) medium(250-400ms) long(400-700ms)
 - **Springs:**
   - Card cover open/close: stiffness 40, damping 14
-  - Frog drag snap-back: stiffness 300, damping 20
-  - Frog launch: stiffness 120, damping 10, mass 0.8
   - Flower pick (held): stiffness 400, damping 25
   - Flower place (fan): stiffness 120, damping 12, mass 0.8
   - Bouquet gather: stiffness 80, damping 12, staggered delay 0.05s per flower
 - **Infinite animations:**
-  - Frog idle bounce: `y: [0, -12, 0]`, 1.5s cycle — hints at drag direction
-  - Frog launched wobble: `rotate: [0, -3, 3, -2, 0]`, 2.5s cycle
   - "Tap to open" pulse: `opacity: [0.3, 0.7, 0.3]`, 2s cycle
-  - Drag hint pulse: `opacity: [0.15, 0.5, 0.15]`, 2s cycle
   - Bucket shimmer (idle hint): `brightness: [1, 1.06, 1]`, 2.5s cycle, staggered 0.3s per bucket
 - **Page entrance:** Staggered fade-in with slide-up (opacity 0→1, y: 20→0), delays increment by 0.2s
 - **Parallax:** Hero section uses `useScroll` for y-translation (0→30%) and opacity fade (1→0)
@@ -105,7 +100,7 @@
 
 ## Interaction Patterns
 - **Card open/close:** Click/tap toggles 3D rotation on Y-axis (0° → -160°). Keyboard: Enter/Space. ARIA: role="button", aria-label toggles between "Open card" / "Close card".
-- **Frog drag:** Vertical drag only (`drag="y"`), elastic 0.15, constraints top: -180px bottom: 10px. Threshold: offset < -50px OR velocity < -300px/s. Cursor: grab → grabbing.
+- **Kikker card:** Square format (1:1), artist-illustrated covers with two random variants (banana boxers on `#9facd8`, duck boxers on `#c7e5d0`). Inside: pale yellow `#fffac0`, personal message on left, frog on right. Open-to-reveal interaction (no drag).
 - **Form inputs:** Bottom-border only, transparent background, accent border on focus. Labels are uppercase, tracked, muted.
 - **Buttons:** Primary (solid fg, hover → accent), Secondary (outlined), Ghost (text + bottom border). All uppercase, tracked, 13px.
 - **Copy feedback:** AnimatePresence text swap ("Copy link" ↔ "Copied!") with scale/opacity transition, auto-reverts after 2s.

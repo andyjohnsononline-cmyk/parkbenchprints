@@ -1,19 +1,19 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import Link from "next/link";
 import CardShell from "@/components/cards/CardShell";
-import FrontCover from "@/components/cards/kikker/FrontCover";
+import FrontCover, {
+  type KikkerVariant,
+} from "@/components/cards/kikker/FrontCover";
 import InsideContent from "@/components/cards/kikker/InsideContent";
 
 export default function KikkerInJeBilPage() {
-  const [isOpen, setIsOpen] = useState(false);
-  const [frogOut, setFrogOut] = useState(false);
+  const [variant, setVariant] = useState<KikkerVariant | null>(null);
 
-  const handleOpenChange = useCallback((open: boolean) => {
-    setIsOpen(open);
-    if (!open) setFrogOut(false);
+  useEffect(() => {
+    setVariant(Math.random() > 0.5 ? "banana" : "duck");
   }, []);
 
   return (
@@ -45,38 +45,25 @@ export default function KikkerInJeBilPage() {
         </p>
       </motion.div>
 
-      <motion.div
-        initial={{ opacity: 0, scale: 0.9 }}
-        animate={{ opacity: 1, scale: 1 }}
-        transition={{ duration: 0.5, delay: 0.2 }}
-      >
-        <CardShell
-          onOpenChange={handleOpenChange}
-          frontCover={<FrontCover />}
-          insideContent={
-            <InsideContent
-              isOpen={isOpen}
-              frogOut={frogOut}
-              onFrogOut={() => setFrogOut(true)}
-            />
-          }
-        />
-      </motion.div>
-
-      <motion.p
-        className="mt-10 text-center font-serif text-2xl text-accent md:text-3xl"
-        initial={{ opacity: 0 }}
-        animate={{ opacity: frogOut ? 1 : 0, y: frogOut ? 0 : 10 }}
-        transition={{ duration: 0.4, delay: frogOut ? 0.3 : 0 }}
-      >
-        Kikker in je bil!
-      </motion.p>
+      {variant && (
+        <motion.div
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.5, delay: 0.2 }}
+        >
+          <CardShell
+            frontCover={<FrontCover variant={variant} />}
+            insideContent={<InsideContent />}
+            cardStyle={{ aspectRatio: "1 / 1" }}
+          />
+        </motion.div>
+      )}
 
       <motion.div
-        className="mt-6 text-center"
+        className="mt-10 text-center"
         initial={{ opacity: 0 }}
-        animate={{ opacity: frogOut ? 1 : 0, y: frogOut ? 0 : 10 }}
-        transition={{ duration: 0.4, delay: frogOut ? 0.6 : 0 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.4, delay: 0.6 }}
       >
         <Link
           href="/cards/kikker-in-je-bil/send"

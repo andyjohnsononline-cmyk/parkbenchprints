@@ -23,7 +23,7 @@ Open [http://localhost:3000/parkbenchprints](http://localhost:3000/parkbenchprin
 | Route | Card | Interaction |
 |-------|------|-------------|
 | `/cards/bloemenmarkt` | Flower Market | Gatefold card — click or drag artist-drawn flowers from market buckets, arrange in a fan bouquet, wrap it up |
-| `/cards/kikker-in-je-bil` | Kikker in je Bil (Frog in Your Pants) | Single-fold card — drag the frog to reveal the April Fools joke |
+| `/cards/kikker-in-je-bil` | Kikker in je Bil (Frog in Your Pants) | Square card with artist-illustrated boxer shorts cover (two random variants) — open to reveal the frog |
 
 ## Pages
 
